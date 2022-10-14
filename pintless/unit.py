@@ -101,3 +101,27 @@ class UnitProduct(Unit):
     # TODO: this may need amending when compound units are a thing.
     __rmul__ = __mul__
 
+
+    def __div__(self, __o: Union[Unit, UnitProduct]) -> Union[None, Unit, UnitProduct]:
+
+
+        return UnitDivision(self, __o)
+
+
+        # # Cancel these out if possible
+        #     denominator_unit_types = __o.sorted_unit_types
+        # if isinstance(__o, Unit):
+        #     denominator_unit_types = [__o.unit_type]
+
+        # # We now have a list of what to remove, so remove it one-by-one if it's there
+        # remaining_units = [u for u in self.sorted_units if u not in denominator_unit_types]
+
+
+        # if isinstance(__o, Unit):
+        #     # Remove the unit's base type if it's in, else divide this type by the base type
+        #     if __o.unit_type in self.sorted_unit_types:
+        #         if len(remaining_units) == 0:
+        #             return None  # No unit!
+        #         if len(remaining_units) == 1:
+        #             return remaining_units[0]
+        #         return UnitProduct(remaining_units)
