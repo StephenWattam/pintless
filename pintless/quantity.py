@@ -10,7 +10,19 @@ class Quantity:
 
     def __init__(self, magnitude, unit) -> None:
         self.magnitude = magnitude
+        self._set_unit(unit)
+
+    def _set_unit(self, unit) -> None:
+        """Set self.unit.  This should only be set when the object is constructed,
+        or when the in-place conversion method ito() is called.
+
+        This is a pint compatibility effort: ideally self.units and self.dimensionality
+        would not exist"""
         self.unit = unit
+
+        # These two are for pint compatibility
+        self.units = self.unit
+        self.dimensionality = self.unit.unit_type
 
     def to(self, target_unit) -> Quantity:
         """Convert this Quantity to another unit"""
@@ -29,6 +41,7 @@ class Quantity:
             raise ValueError("Cannot process string target types yet")
 
         self.magnitude *= self.unit.conversion_factor(target_unit)
+        self._set_unit(target_unit)
 
     # https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
 
@@ -81,10 +94,12 @@ class Quantity:
         # Not ideal as this creates a temporary object and the simplification logic is
         # quite involved.
         new_unit = self.unit / __o.unit
+        divided_magnitude = self.magnitude / __o.magnitude
         conversion_factor, simplified_new_unit = new_unit.simplify()
+        print(f"TO TEST: conversion factor for cancelling units during simplification: {conversion_factor}")
         if simplified_new_unit is None:
-            return self.magnitude * conversion_factor
-        return Quantity(self.magnitude * conversion_factor, simplified_new_unit)
+            return divided_magnitude * conversion_factor
+        return Quantity(divided_magnitude * conversion_factor, simplified_new_unit)
 
 
 
@@ -127,7 +142,8 @@ class Quantity:
         return int(self.magnitude)
 
     def __str__(self) -> str:
-        return f"<Quantity({self.magnitude}, '{self.unit.name}')>"
+        return f"{self.magnitude} {self.unit.name}"
 
     def __repr__(self) -> str:
+        return f"<Quantity({self.magnitude}, '{self.unit.name}')>"
         return self.__str__()

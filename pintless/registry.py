@@ -42,6 +42,7 @@ class Registry:
         for utype, units in defs.items():
 
             # Create a forward index for the unit type
+            utype = f"[{utype}]"    # XXX: pint types have brackets.  This is for compat only
             self.units_for_utype[utype] = {}
 
             # For every unit, for every prefix, calculate a multiplier down to the 'base unit'

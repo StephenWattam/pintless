@@ -64,8 +64,8 @@ class UnitDivision(Unit):
 
         self.numerator_unit = numerator_unit
         self.denominator_unit = denominator_unit
-        self.name = f"{numerator_unit.name}/{denominator_unit.name}"
-        self.unit_type = f"{numerator_unit.unit_type}/{denominator_unit.unit_type}"
+        self.name = f"{numerator_unit.name} / {denominator_unit.name}"
+        self.unit_type = f"{numerator_unit.unit_type} / {denominator_unit.unit_type}"
 
     def simplify(self) -> Tuple[float, Unit]:
         """Cancel denominator and numerator units"""
@@ -183,8 +183,8 @@ class UnitProduct(Unit):
 
         self.sorted_units = sorted(units, key=lambda u: u.unit_type)
         self.sorted_unit_types = [u.unit_type for u in self.sorted_units]
-        self.name = "*".join([u.name for u in self.sorted_units])
-        self.unit_type = "*".join(self.sorted_unit_types)
+        self.name = " * ".join([u.name for u in self.sorted_units])
+        self.unit_type = " * ".join(self.sorted_unit_types)
 
     def conversion_factor(self, target_unit: Unit) -> float:
 
