@@ -68,8 +68,8 @@ class Quantity:
         if not isinstance(__o, Quantity):
             raise ValueError("Cannot add Quantity and non-Quantity, use .to('unit').magnitude to strip units first")
 
-        print(f"STUB: Cannot multiply quantities right now")
-        # FIXME
+        # Units have multiply logic built in, and numbers do: 10s * 5kW = 50kW*s
+        return Quantity(self.magnitude * __o.magnitude, self.unit * __o.unit)
 
     def __truediv__(self, __o: object) -> Quantity:
         """'true' division, where 2/3 is 0.66 rather than 0"""

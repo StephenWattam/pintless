@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, List
 
 from .quantity import Quantity
 
@@ -12,10 +12,6 @@ class Unit:
         self.unit_type = unit_type
         self.base_unit = base_unit
         self.multiplier = multiplier
-
-    # op1 = (operator.neg, operator.truth)
-    # op2_cmp = (operator.eq,)  # operator.lt)
-    # op2_math = (operator.add, operator.sub, operator.mul, operator.truediv)
 
     def conversion_factor(self, target_unit: Unit) -> float:
 
@@ -42,15 +38,66 @@ class Unit:
             and self.multiplier == __o.multiplier
         )
 
-    def __mul__(self, __o: Union[Unit, ValidMagnitude]) -> Quantity:
+    def __mul__(self, __o: Union[Unit, ValidMagnitude]) -> Union[Unit, Quantity]:
         """Return a quantity using this unit"""
 
         # Return a compound unit
         if isinstance(__o, Unit):
-            print(f"STUB: compound unit")
+            return UnitProduct([self, __o])
 
         # Create a Quantity
         return Quantity(__o, self)
 
     # TODO: this may need amending when compound units are a thing.
     __rmul__ = __mul__
+
+
+
+class UnitProduct(Unit):
+    """Represent units that have been multiplied together,
+    e.g. kilowatt-hour.
+
+    Because multiplication is symmetric the order doesn't
+    matter when computing conversions"""
+
+    def __init__(self, units: List[Unit]) -> None:
+
+        self.sorted_units = sorted(units, key=lambda u: u.unit_type)
+        self.sorted_unit_types = [u.unit_type for u in self.sorted_units]
+        self.name = "*".join([u.name for u in self.sorted_units])
+        self.unit_type = "*".join(self.sorted_unit_types)
+
+    def conversion_factor(self, target_unit: Unit) -> float:
+
+        # The other unit must be of the same unit type, which means a product of the same
+        # unit types.
+        assert isinstance(target_unit, UnitProduct), f"Cannot convert between units of different types: {self.sorted_unit_types} != {target_unit})"
+        assert self.sorted_unit_types == target_unit.sorted_unit_types, f"Cannot convert between units with different base types ({self.sorted_unit_types} != {target_unit.sorted_unit_types})"
+
+        # convert to the base unit, then convert from that base unit to the new unit
+        conversion_factor = 1
+        for unit_from, unit_to in zip(self.sorted_units, target_unit.sorted_units):
+            conversion_factor *= unit_from.conversion_factor(unit_to)
+
+        return conversion_factor
+
+    def __eq__(self, __o: object) -> bool:
+        return isinstance(__o, UnitProduct) and all([a == b for a, b in zip(self.sorted_units, __o.sorted_units)])
+
+    def __mul__(self, __o: Union[Unit, ValidMagnitude]) -> Union[Unit, Quantity]:
+        """Return a quantity using this unit"""
+
+        # Return a compound unit
+        if isinstance(__o, UnitProduct):
+            return UnitProduct(self.sorted_units + __o.sorted_units)
+
+        # Return a compound unit
+        if isinstance(__o, Unit):
+            return UnitProduct(self.sorted_units + [__o])
+
+        # Create a Quantity
+        return Quantity(__o, self)
+
+    # TODO: this may need amending when compound units are a thing.
+    __rmul__ = __mul__
+
