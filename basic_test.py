@@ -33,4 +33,11 @@ print(f"meters: {meters}")
 print(f"hours: {hours}")
 print(f"seconds?: {seconds}")
 
+time = 10 * reg.H
+distance = 1 * reg.mile
+print(f"time / distance: {time / distance}")
+
+print(f"Cancelling: {distance/distance} and {time/time} and {mh50 / mh50}")
+print(f"Cancelling with conversion: {(10 * reg.km) / (20 * reg.meter)}")
+
 import code; code.interact(local=locals())

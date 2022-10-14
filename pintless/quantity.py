@@ -77,8 +77,16 @@ class Quantity:
         if not isinstance(__o, Quantity):
             raise ValueError("Cannot add Quantity and non-Quantity, use .to('unit').magnitude to strip units first")
 
-        print(f"STUB: cannot divide quantities right now")
-        # FIXME --- need to unify units first
+        # divide, then simplify.
+        # Not ideal as this creates a temporary object and the simplification logic is
+        # quite involved.
+        new_unit = self.unit / __o.unit
+        conversion_factor, simplified_new_unit = new_unit.simplify()
+        if simplified_new_unit is None:
+            return self.magnitude * conversion_factor
+        return Quantity(self.magnitude * conversion_factor, simplified_new_unit)
+
+
 
     # # TODO
     # object.__truediv__(self, other)
