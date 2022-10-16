@@ -4,7 +4,7 @@ from distutils.core import setup
 
 setup(name='pintless',
       version='0.1.0',
-      description='Simple pint',
+      description='Simple and performant unit library for python',
       author='Steve Wattam',
       author_email='steve@watt.am',
       url='tbd',
