@@ -18,6 +18,7 @@ Design Principles
 
  - Fast is more important than small or simple
  - Precompute where possible
+ - Having principles usually leads you to design for them rather than reality
  - Don't incur performance costs for obscure units: allow users to specify minimal sets of things for common workflows
  - Don't incur performance costs for nicer APIs (e.g. string processing, output to notebooks, etc)
  - Quantity and Unit classes are numbers and should be as transparent/minimal as possible, holding as few external references as possible, and should be serialisable with as little pain as possible

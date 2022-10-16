@@ -47,7 +47,7 @@ print("Dimensionless numbers and interacting with floats")
 a = 45 * reg.dimensionless
 b = 50 * reg.dimensionless
 print(f"Dimensionless number a={a}, b={b}, a+b={a+b}, a*b={a*b}, a/b={a/b}, a*10={a*10}")
-
+print(f"Dimensionless * unit: {a * reg.hour}, *ratio: {a * reg.Hz}, *product: {a*reg.kWh}")
 
 
 # product types
@@ -57,6 +57,12 @@ print(f"-> {kwh} / 5h = {kwh / (5 * reg.hour)}")
 # Ratio types
 rate = 5 * reg.Hz
 print(f"Ratio types: {rate} * 100s = ({rate * (100 * reg.second)})")
+
+
+# Multiply quantities by units
+start = 14 * reg.ms
+second = start * reg.ms
+third = second * reg.ms
 
 
 import code; code.interact(local=locals())

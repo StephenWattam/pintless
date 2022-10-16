@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Union, TYPE_CHECKING
 
+import pintless.unit as unit
 if TYPE_CHECKING:
     from .unit import Unit
 
@@ -77,6 +78,10 @@ class Quantity:
 
     def __mul__(self, __o: object) -> Quantity:
         """Multiply the Quantity.  Outputs something with compound units"""
+
+        # Someone is 'adding' units to this quantity
+        if isinstance(__o, unit.Unit):
+            return Quantity(self.magnitude, self.unit * __o)
 
         if not isinstance(__o, Quantity):
             # Assume it's a magnitude.  Maybe warn on this condition?
