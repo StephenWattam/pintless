@@ -1,7 +1,6 @@
 import os
 import json
 from functools import lru_cache
-from .quantity import Quantity
 from .unit import Unit, UnitProduct, UnitRatio
 
 DEFAULT_DEFINITION_FILE = "units.json"

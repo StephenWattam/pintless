@@ -43,8 +43,20 @@ print(f"Cancelling with conversion: {(10 * reg.km) / (20 * reg.meter)}")
 
 
 # Dimensionless numbers
-number = 45 * reg.dimensionless
-print(f"-> {number}")
+print("Dimensionless numbers and interacting with floats")
+a = 45 * reg.dimensionless
+b = 50 * reg.dimensionless
+print(f"Dimensionless number a={a}, b={b}, a+b={a+b}, a*b={a*b}, a/b={a/b}, a*10={a*10}")
+
+
+
+# product types
+kwh = 10 * reg.kWh
+print(f"-> {kwh} / 5h = {kwh / (5 * reg.hour)}")
+
+# Ratio types
+rate = 5 * reg.Hz
+print(f"Ratio types: {rate} * 100s = ({rate * (100 * reg.second)})")
 
 
 import code; code.interact(local=locals())

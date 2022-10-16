@@ -219,13 +219,23 @@ class UnitProduct(Unit):
     def __mul__(self, __o: Union[Unit, ValidMagnitude]) -> Union[Unit, Quantity]:
         """Return a quantity using this unit"""
 
-        # Return a compound unit
-        if isinstance(__o, UnitProduct):
-            return UnitProduct(self.sorted_units + __o.sorted_units)
-
-        # Return a compound unit
+        # If the counterpart is a unit, we are going to multiply
+        # the units up, and return another unit.
         if isinstance(__o, Unit):
-            return UnitProduct(self.sorted_units + [__o])
+            new_unit_list = self.sorted_units + [__o]
+
+            # If it's a product, it has units within it
+            if isinstance(__o, UnitProduct):
+                new_unit_list = self.sorted_units + __o.sorted_units
+
+            # Remove any duplicate dimensionless units, as these do not compound
+            if self.dimensionless_unit.unit_type in [u.unit_type for u in new_unit_list]:
+                new_unit_list = [x for x in new_unit_list if x.unit_type != self.dimensionless_unit.unit_type] + [self.dimensionless_unit]
+
+            assert len(new_unit_list) > 0, "Multiplication of two Unit types resulted in no units.  This should never happen."
+            if len(new_unit_list) > 1:
+                return UnitProduct(new_unit_list)
+            return new_unit_list[0]
 
         # Create a Quantity
         return Quantity(__o, self)
