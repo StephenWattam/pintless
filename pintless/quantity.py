@@ -96,9 +96,6 @@ class Quantity:
         new_unit = self.unit / __o.unit
         divided_magnitude = self.magnitude / __o.magnitude
         conversion_factor, simplified_new_unit = new_unit.simplify()
-        print(f"TO TEST: conversion factor for cancelling units during simplification: {conversion_factor}")
-        if simplified_new_unit is None:
-            return divided_magnitude * conversion_factor
         return Quantity(divided_magnitude * conversion_factor, simplified_new_unit)
 
 

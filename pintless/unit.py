@@ -1,17 +1,18 @@
 from __future__ import annotations
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, Optional
 
 from .quantity import Quantity
 
 ValidMagnitude = Union[int, float, complex]
-
+Numeric = Union[int, float]
 
 class Unit:
-    def __init__(self, name, unit_type, base_unit, multiplier) -> None:
+    def __init__(self, name: str, unit_type: str, base_unit: str, multiplier: Numeric, dimensionless_unit: Optional[Unit]) -> None:
         self.name = name
         self.unit_type = unit_type
         self.base_unit = base_unit
         self.multiplier = multiplier
+        self.dimensionless_unit = self if dimensionless_unit is None else dimensionless_unit
 
     def conversion_factor(self, target_unit: Unit) -> float:
 
@@ -50,17 +51,17 @@ class Unit:
 
     __rmul__ = __mul__
 
-    def __truediv__(self, __o: Unit) -> UnitDivision:
+    def __truediv__(self, __o: Unit) -> UnitRatio:
         """Dividing never produces a quantity, always another unit"""
 
-        return UnitDivision(self, __o)
+        return UnitRatio(self, __o)
 
 
-class UnitDivision(Unit):
+class UnitRatio(Unit):
     def __init__(self, numerator_unit, denominator_unit) -> None:
 
-        assert not isinstance(numerator_unit, UnitDivision), "UnitDivision objects do not support UnitDivision objects as numerators or denominators: this should never happen unless the built-in arithmetic methods are not being used."
-        assert not isinstance(denominator_unit, UnitDivision), "UnitDivision objects do not support UnitDivision objects as numerators or denominators: this should never happen unless the built-in arithmetic methods are not being used."
+        assert not isinstance(numerator_unit, UnitRatio), "UnitRatio objects do not support UnitRatio objects as numerators or denominators: this should never happen unless the built-in arithmetic methods are not being used."
+        assert not isinstance(denominator_unit, UnitRatio), "UnitRatio objects do not support UnitRatio objects as numerators or denominators: this should never happen unless the built-in arithmetic methods are not being used."
 
         self.numerator_unit = numerator_unit
         self.denominator_unit = denominator_unit
@@ -91,7 +92,7 @@ class UnitDivision(Unit):
         # If denominator is empty, we should reduce down and output a simple UnitProduct or Unit obj.
         if len(new_denominator) == 0:
             if len(units_in_numerator) == 0:
-                return conversion_factor, None
+                return conversion_factor, self.numerator_unit.dimensionless_unit
             if len(units_in_numerator) == 1:
                 return conversion_factor, units_in_numerator[0]
             if len(units_in_numerator) > 1:
@@ -101,23 +102,23 @@ class UnitDivision(Unit):
                 raise ValueError("Simplification cancelled everything from the numerator and I'm not sure what to do")
                 # FIXME
             if len(units_in_numerator) == 1:
-                return conversion_factor, UnitDivision(units_in_numerator[0], new_denominator[0])
+                return conversion_factor, UnitRatio(units_in_numerator[0], new_denominator[0])
             if len(units_in_numerator) > 1:
-                return conversion_factor, UnitDivision(UnitProduct(units_in_numerator), new_denominator[0])
+                return conversion_factor, UnitRatio(UnitProduct(units_in_numerator), new_denominator[0])
 
         # else len(new_denominator) > 1:
         if len(units_in_numerator) == 0:
             raise ValueError("Simplification cancelled everything from the numerator and I'm not sure what to do")
             # FIXME
         if len(units_in_numerator) == 1:
-            return conversion_factor, UnitDivision(units_in_numerator[0], UnitProduct(new_denominator))
+            return conversion_factor, UnitRatio(units_in_numerator[0], UnitProduct(new_denominator))
         if len(units_in_numerator) > 1:
-            return conversion_factor, UnitDivision(UnitProduct(units_in_numerator), UnitProduct(new_denominator))
+            return conversion_factor, UnitRatio(UnitProduct(units_in_numerator), UnitProduct(new_denominator))
 
     def conversion_factor(self, target_unit: Unit) -> float:
 
         assert isinstance(
-            target_unit, UnitDivision
+            target_unit, UnitRatio
         ), f"Cannot convert between units of different types: {self.unit_type} != {target_unit}"
         assert (
             self.unit_type == target_unit.unit_type
@@ -131,7 +132,7 @@ class UnitDivision(Unit):
 
     def __eq__(self, __o: object) -> bool:
         return (
-            isinstance(__o, UnitDivision)
+            isinstance(__o, UnitRatio)
             and self.numerator_unit == __o.numerator_unit
             and self.denominator_unit == __o.denominator_unit
         )
@@ -141,15 +142,15 @@ class UnitDivision(Unit):
 
         # If this is also a divided unit then the denominator has to have the same
         # unit types in it
-        if isinstance(__o, UnitDivision):
-            return UnitDivision(
+        if isinstance(__o, UnitRatio):
+            return UnitRatio(
                 self.numerator_unit * __o.numerator_unit,
                 self.denominator_unit * __o.denominator_unit,
             )
 
         # Denominator is 1 here so we multiply the numerator: 2*1/3 = 2/3
         if isinstance(__o, Unit) or isinstance(__o, UnitProduct):
-            return UnitDivision(self.numerator_unit * __o, self.denominator_unit)
+            return UnitRatio(self.numerator_unit * __o, self.denominator_unit)
 
         # Create a Quantity with this type
         return Quantity(__o, self)
@@ -161,15 +162,15 @@ class UnitDivision(Unit):
 
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
-        if isinstance(__o, UnitDivision):
-            return UnitDivision(
+        if isinstance(__o, UnitRatio):
+            return UnitRatio(
                 self.numerator_unit * __o.denominator_unit,
                 self.denominator_unit * __o.numerator_unit,
             )
 
         # If we're dividing by a non-divided quantity we don't have a denominator,
         # it's essentially 1: 1/3 / 2 is 1/(2*3)
-        return UnitDivision(self.numerator_unit, self.denominator_unit * __o)
+        return UnitRatio(self.numerator_unit, self.denominator_unit * __o)
 
 
 class UnitProduct(Unit):
@@ -181,10 +182,16 @@ class UnitProduct(Unit):
 
     def __init__(self, units: List[Unit]) -> None:
 
+        if len(units) < 2:
+            raise ValueError("Cannot create a UnitProduct from the product of less than two units")
+
         self.sorted_units = sorted(units, key=lambda u: u.unit_type)
         self.sorted_unit_types = [u.unit_type for u in self.sorted_units]
         self.name = " * ".join([u.name for u in self.sorted_units])
         self.unit_type = " * ".join(self.sorted_unit_types)
+
+        assert all([self.sorted_units[0].dimensionless_unit == u.dimensionless_unit for u in self.sorted_units[1:]]), "Dimensionless units do not agree --- were the units created by different registries?"
+        self.dimensionless_unit = self.sorted_units[0].dimensionless_unit
 
     def conversion_factor(self, target_unit: Unit) -> float:
 
@@ -227,4 +234,4 @@ class UnitProduct(Unit):
 
     def __truediv__(self, __o: Unit) -> Union[None, Unit, UnitProduct]:
 
-        return UnitDivision(self, __o)
+        return UnitRatio(self, __o)

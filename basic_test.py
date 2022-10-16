@@ -40,4 +40,11 @@ print(f"time / distance: {time / distance}")
 print(f"Cancelling: {distance/distance} and {time/time} and {mh50 / mh50}")
 print(f"Cancelling with conversion: {(10 * reg.km) / (20 * reg.meter)}")
 
+
+
+# Dimensionless numbers
+number = 45 * reg.dimensionless
+print(f"-> {number}")
+
+
 import code; code.interact(local=locals())
