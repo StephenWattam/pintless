@@ -87,8 +87,10 @@ class Quantity:
             # Assume it's a magnitude.  Maybe warn on this condition?
             __o = Quantity(__o, self.unit.dimensionless_unit)
 
+        multiplied_magnitude = self.magnitude * __o.magnitude
+        conversion_factor, simplified_new_unit = (self.unit * __o.unit).simplify()
         # Units have multiply logic built in, and numbers do: 10s * 5kW = 50kW*s
-        return Quantity(self.magnitude * __o.magnitude, self.unit * __o.unit)
+        return Quantity(multiplied_magnitude * conversion_factor, simplified_new_unit)
 
     def __truediv__(self, __o: object) -> Quantity:
         """'true' division, where 2/3 is 0.66 rather than 0"""
@@ -98,11 +100,8 @@ class Quantity:
             __o = Quantity(__o, self.unit.dimensionless_unit)
 
         # divide, then simplify.
-        # Not ideal as this creates a temporary object and the simplification logic is
-        # quite involved.
-        new_unit = self.unit / __o.unit
         divided_magnitude = self.magnitude / __o.magnitude
-        conversion_factor, simplified_new_unit = new_unit.simplify()
+        conversion_factor, simplified_new_unit = (self.unit / __o.unit).simplify()
         return Quantity(divided_magnitude * conversion_factor, simplified_new_unit)
 
 

@@ -110,13 +110,13 @@
     },
 
     "energy": {
-        "Wh": {"__relation__": "product", "units": ["watt", "hour"]},
-        "watt_hour": {"__relation__": "product", "units": ["watt", "hour"]}
+        "Wh": {"numerator": ["watt", "hour"]},
+        "watt_hour": {"numerator": ["watt", "hour"]}
     },
 
     "rate": {
-        "Hz": {"__relation__": "ratio", "units": ["dimensionless", "second"]},
-        "cycles": {"__relation__": "ratio", "units": ["dimensionless", "second"]}
+        "Hz": {"numerator": ["dimensionless"], "denominator": ["second"]},
+        "cycles": {"numerator": ["dimensionless"], "denominator": ["second"]}
     }
 
 }
