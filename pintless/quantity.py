@@ -3,11 +3,17 @@ from __future__ import annotations
 from typing import Union, TYPE_CHECKING
 
 import pintless.unit as unit
-if TYPE_CHECKING:
-    from .unit import Unit
 
 
 class Quantity:
+    """Represents a value paired with a unit.  The value can be any python object, but is
+    expected to be a numeric type (typically float, int, complex) that responds to the
+    usual __add__, __mul__, etc.
+
+    Quantity objects can be constructed by multiplying a python object by a Unit object.
+
+    Quantity objects can have their values extracted using .magnitude(), and can be converted
+    to new units using .to() or .ito().  This follows the API established by the pint library."""
 
     def __init__(self, magnitude, unit) -> None:
         self.magnitude = magnitude
