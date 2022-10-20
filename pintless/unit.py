@@ -159,12 +159,8 @@ class Unit:
             new_numerators = self.numerator_units + __o.numerator_units
             new_denominators = self.denominator_units + __o.denominator_units
 
-            # Filter out double dimensionless: dimensionless * dimensionless == dimensionless
-            new_numerators = [u for u in new_numerators if u.unit_type != self.dimensionless_base_unit.unit_type]
-            new_denominators = [u for u in new_denominators if u.unit_type != self.dimensionless_base_unit.unit_type]#: + [self.dimensionless_unit]
-
-
-            return Unit(new_numerators, new_denominators, self.dimensionless_base_unit)
+            new_unit = Unit(new_numerators, new_denominators, self.dimensionless_base_unit)
+            return new_unit.simplify()[1]
 
         # Must be some other (presumably numeric) quantity
         return Quantity(__o, self)
@@ -182,6 +178,5 @@ class Unit:
         new_numerators = self.numerator_units + __o.denominator_units
         new_denominators = self.denominator_units + __o.numerator_units
 
-        # TODO: filter out double dimensionless: dimensionless * dimensionless == dimensionless
-
-        return Unit(new_numerators, new_denominators, self.dimensionless_base_unit)
+        new_unit = Unit(new_numerators, new_denominators, self.dimensionless_base_unit)
+        return new_unit.simplify()[1]
