@@ -1,4 +1,6 @@
 # Pintless
+[![CodeFactor](https://www.codefactor.io/repository/github/stephenwattam/pintless/badge)](https://www.codefactor.io/repository/github/stephenwattam/pintless)
+
 The unit library [pint](https://github.com/hgrecco/pint) is fantastic.  It removes a whole class of bugs from common data science workloads, and provides good tools for humans to process numbers.  But it's very slow, and provides vast swaths of functionality that I don't need.
 
 This library is like pint, but _less_ --- it lets you use units without pain, but aims to be performant and small-in-memory.  It's designed as a drop-in replacement to pint for those of us who don't use most of pint's features.
