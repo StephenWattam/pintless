@@ -3,16 +3,24 @@ import json
 from functools import lru_cache
 from .unit import BaseUnit, Unit
 import logging
+from typing import Optional, List
 
 DEFAULT_DEFINITION_FILE = "units.json"
 PREFIX_KEY = "__prefixes__"
 DIMENSIONLESS_UNIT_NAME = "dimensionless"
+MULTIPLY_TOKEN = "__multiply__"
+DIVIDE_TOKEN = "__divide__"
 
 logging.basicConfig()
 log = logging.getLogger()
 
+
 class Registry:
-    def __init__(self, definition_filename=None):
+    def __init__(
+        self, definition_filename: Optional[str] = None, link_to_registry: bool = True
+    ):
+
+        self.link_to_registry = link_to_registry
 
         if definition_filename is None:
             definition_filename = (
@@ -75,8 +83,13 @@ class Registry:
                             denominator_list,
                         )
                         if prefix + unit_name in self.units:
-                            log.warn("Detected duplicate unit in unit definition: %s", prefix + unit_name)
-                        log.debug("Adding derived type for unit: %s", prefix + unit_name)
+                            log.warn(
+                                "Detected duplicate unit in unit definition: %s",
+                                prefix + unit_name,
+                            )
+                        log.debug(
+                            "Adding derived type for unit: %s", prefix + unit_name
+                        )
                         self.units.add(prefix + unit_name)
                     continue
 
@@ -87,8 +100,15 @@ class Registry:
                     )
                     self.utype_for_unit[prefix + unit_name] = utype
                     if prefix + unit_name in self.units:
-                        log.warn("Detected duplicate unit in unit definition: %s", prefix + unit_name)
-                    log.debug("Adding non-derived type for unit: %s of unit type %s", prefix + unit_name, utype)
+                        log.warn(
+                            "Detected duplicate unit in unit definition: %s",
+                            prefix + unit_name,
+                        )
+                    log.debug(
+                        "Adding non-derived type for unit: %s of unit type %s",
+                        prefix + unit_name,
+                        utype,
+                    )
                     self.units.add(prefix + unit_name)
 
             # Check we have a base unit for the unit type
@@ -105,18 +125,27 @@ class Registry:
             setattr(self, unit_name, self.get_unit(unit_name))
 
     @lru_cache
-    def get_unit(self, unit_name: str) -> Unit:
+    def get_unit(self, unit_name: str, support_expressions: bool = True) -> Unit:
         """Return a Unit for a given type.  The unit will not have a value attached
         as it would in a Quantity object.
 
-        Does not support construction of units that are not already listed in the
-        units list loaded by the registry, e.g. a registry containing "m" and "s"
-        will not return anything for "m/s".  The way of defining such units is to
-        define a derived unit "mps".
+        Supports basic expressions of types of the form x/y where x and y are a list
+        of units separated by multiplication symbols or spaces:
+
+            m s / seconds
+            kilowatt / hour
+            second * second
+            hour * watt * Hz
+
         """
 
         if unit_name not in self.units:
-            raise ValueError(f"Unit '{unit_name}' not round in registry")
+            # We may have a unit that is an expression.
+
+            if support_expressions:
+                return self._parse_unit_expression(unit_name)
+            else:
+                raise ValueError(f"Unit '{unit_name}' not round in registry")
 
         # Load either a derived type or a basic type
         if unit_name in self.derived_types:
@@ -129,6 +158,7 @@ class Registry:
             [self._get_base_unit(u) for u in numerator_unit_list],
             [self._get_base_unit(u) for u in denominator_unit_list],
             self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
+            self if self.link_to_registry else None,
         )
 
     @lru_cache
@@ -145,3 +175,83 @@ class Registry:
         multiplier = self.units_for_utype[unit_type][base_unit_name]
 
         return BaseUnit(base_unit_name, unit_type, base_type, multiplier)
+
+    def _parse_unit_expression(self, unit_expr: str) -> Unit:
+        """Parse an expression containing the following tokens:
+
+         - unit name (any string without spaces)
+         - *, to multiply units
+         - /, to divide units
+         - ' ' (a space), to multiply units
+
+        Because we are dealing with multiply and divide operations only,
+        the need to resolve a full parse tree isn't there: we can simply
+        walk through the operations left-to-right.
+        """
+
+        def type_for_token(token: str):
+            if token == "*" or token == "":
+                return MULTIPLY_TOKEN
+            if token == "/":
+                return DIVIDE_TOKEN
+            return self.get_unit(token, support_expressions=False)
+
+        # Replace * and / with whitespace separated versions, then split on whitespace.
+        # Saves use of regex libs
+        unit_expr = unit_expr.replace("*", " * ").replace("/", " / ")
+        parts = unit_expr.split()
+        parts = [type_for_token(s.strip()) for s in parts]
+        log.debug("Parsed expression into component parts: %s", parts)
+
+        # Empty expressions are dimensionless
+        if len(parts) == 0:
+            return self.get_unit(DIMENSIONLESS_UNIT_NAME)
+
+        assert isinstance(parts[0], Unit), "Expressions must start with a unit name"
+        assert isinstance(parts[-1], Unit), "Expressions must end with a unit name"
+
+        # Because we apply operations left-to-right, we will bundle them into pairs
+        # giving [(operation, unit)]
+        #
+        # Iterate through and, when we have both of these, put them in the list.
+        operations = []
+        current_op = None
+        for i, part in enumerate(parts[1:]):
+            if part == MULTIPLY_TOKEN:
+                if current_op is not None:
+                    raise ValueError(
+                        f"Repeated multiplication token in expression token {i+2}: {part}"
+                    )
+                current_op = MULTIPLY_TOKEN
+            elif part == DIVIDE_TOKEN:
+                if current_op is not None:
+                    raise ValueError(
+                        f"Repeated division token in expression token {i+2}: {part}"
+                    )
+                current_op = DIVIDE_TOKEN
+            elif isinstance(part, Unit):
+                if current_op is not None:
+                    operations.append((current_op, part))
+                    current_op = None
+                else:
+                    # two units following one another is multiplication, not a problem
+                    operations.append((MULTIPLY_TOKEN, part))
+            else:
+                raise ValueError(
+                    f"Unrecognised token in expression token {i+2}: {part}"
+                )
+
+        log.debug(f"Performing operations: %s", operations)
+
+        # Now apply operations
+        current_value: Unit = parts[0]
+        for operation, operand in operations:
+            assert operation in [MULTIPLY_TOKEN, DIVIDE_TOKEN]
+            assert isinstance(operand, Unit)
+
+            if operation == MULTIPLY_TOKEN:
+                current_value = current_value * operand
+            elif operation == DIVIDE_TOKEN:
+                current_value = current_value / operand
+
+        return current_value

@@ -31,21 +31,25 @@ class Quantity:
         self.units = self.unit
         self.dimensionality = self.unit.unit_type
 
-    def to(self, target_unit) -> Quantity:
+    def to(self, target_unit: Union[str, unit.Unit]) -> Quantity:
         """Convert this Quantity to another unit"""
 
         if isinstance(target_unit, str):
-            raise ValueError("Cannot process string target types yet")
+            if self.unit.registry is None:
+                raise ValueError("Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units.")
+            target_unit = self.unit.registry.get_unit(target_unit)
 
         return Quantity(self.magnitude * self.unit.conversion_factor(target_unit),
                         target_unit)
 
     # def ito(self, target_unit: Union[str, Unit]) -> None:
-    def ito(self, target_unit) -> None:
+    def ito(self, target_unit: Union[str, unit.Unit]) -> None:
         """In-place version of to"""
 
         if isinstance(target_unit, str):
-            raise ValueError("Cannot process string target types yet")
+            if self.unit.registry is None:
+                raise ValueError("Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units.")
+            target_unit = self.unit.registry.get_unit(target_unit)
 
         self.magnitude *= self.unit.conversion_factor(target_unit)
         self._set_unit(target_unit)

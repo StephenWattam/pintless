@@ -8,5 +8,11 @@ setup(name='pintless',
       author='Steve Wattam',
       author_email='steve@watt.am',
       url='tbd',
-      packages=[],#'', 'distutils.command'],
+      packages=[],
+      extras_require={
+        'dev': [
+            'pytest',
+            'pytest-cov'
+        ]
+    }
      )

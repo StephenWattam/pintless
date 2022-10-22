@@ -3,6 +3,7 @@ from typing import Union, List, Tuple, Optional
 from functools import lru_cache
 
 from .quantity import Quantity
+import pintless.registry
 
 ValidMagnitude = Union[int, float, complex]
 Numeric = Union[int, float]
@@ -81,14 +82,16 @@ class Unit:
         numerator_units: List[BaseUnit],
         denominator_units: List[BaseUnit],
         dimensionless_base_unit: BaseUnit,
+        registry: Optional[pintless.registry.Registry]
     ) -> None:
 
+        self.registry = registry
         self.dimensionless_base_unit = dimensionless_base_unit
 
         if len(numerator_units) == 0 and len(denominator_units) == 0:
             self.dimensionless_unit = self
         else:
-            self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit)
+            self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit, self.registry)
 
         # Remove dimensionless units.
         numerator_units = [
@@ -170,8 +173,11 @@ class Unit:
             return conversion_factor, self.dimensionless_unit
 
         return conversion_factor, Unit(
-            new_numerator, new_denominator, self.dimensionless_base_unit
+            new_numerator, new_denominator, self.dimensionless_base_unit, self.registry
         )
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def __str__(self) -> str:
         return f"<Unit ({self.name})>"
@@ -250,7 +256,7 @@ class Unit:
             new_denominators = self.denominator_units + __o.denominator_units
 
             new_unit = Unit(
-                new_numerators, new_denominators, self.dimensionless_base_unit
+                new_numerators, new_denominators, self.dimensionless_base_unit, self.registry
             )
             return new_unit.simplify()[1]
 
@@ -270,5 +276,5 @@ class Unit:
         new_numerators = self.numerator_units + __o.denominator_units
         new_denominators = self.denominator_units + __o.numerator_units
 
-        new_unit = Unit(new_numerators, new_denominators, self.dimensionless_base_unit)
+        new_unit = Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)
         return new_unit.simplify()[1]
