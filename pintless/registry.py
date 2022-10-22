@@ -3,7 +3,7 @@ import json
 from functools import lru_cache
 from .unit import BaseUnit, Unit
 import logging
-from typing import Optional, List
+from typing import Optional
 
 DEFAULT_DEFINITION_FILE = "units.json"
 PREFIX_KEY = "__prefixes__"
@@ -241,7 +241,7 @@ class Registry:
                     f"Unrecognised token in expression token {i+2}: {part}"
                 )
 
-        log.debug(f"Performing operations: %s", operations)
+        log.debug("Performing operations: %s", operations)
 
         # Now apply operations
         current_value: Unit = parts[0]

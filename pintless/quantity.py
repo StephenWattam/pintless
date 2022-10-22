@@ -1,6 +1,6 @@
-
 from __future__ import annotations
-from typing import Union, TYPE_CHECKING
+from typing import Union
+import math
 
 import pintless.unit as unit
 
@@ -36,11 +36,14 @@ class Quantity:
 
         if isinstance(target_unit, str):
             if self.unit.registry is None:
-                raise ValueError("Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units.")
+                raise ValueError(
+                    "Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units."
+                )
             target_unit = self.unit.registry.get_unit(target_unit)
 
-        return Quantity(self.magnitude * self.unit.conversion_factor(target_unit),
-                        target_unit)
+        return Quantity(
+            self.magnitude * self.unit.conversion_factor(target_unit), target_unit
+        )
 
     # def ito(self, target_unit: Union[str, Unit]) -> None:
     def ito(self, target_unit: Union[str, unit.Unit]) -> None:
@@ -48,7 +51,9 @@ class Quantity:
 
         if isinstance(target_unit, str):
             if self.unit.registry is None:
-                raise ValueError("Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units.")
+                raise ValueError(
+                    "Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units."
+                )
             target_unit = self.unit.registry.get_unit(target_unit)
 
         self.magnitude *= self.unit.conversion_factor(target_unit)
@@ -61,18 +66,29 @@ class Quantity:
         return self.magnitude.__bool__()
 
     def __eq__(self, __o: object) -> bool:
-        return isinstance(__o, Quantity) and self.magnitude == __o.magnitude and self.unit == __o.unit
+        return (
+            isinstance(__o, Quantity)
+            and self.magnitude == __o.magnitude
+            and self.unit == __o.unit
+        )
 
     def __lt__(self, __o: object) -> bool:
-        return isinstance(__o, Quantity) and self.magnitude < __o.magnitude * self.unit.conversion_factor(__o.unit)
+        return isinstance(
+            __o, Quantity
+        ) and self.magnitude < __o.magnitude * self.unit.conversion_factor(__o.unit)
 
     def __add__(self, __o: object) -> Quantity:
         if not isinstance(__o, Quantity):
-            raise ValueError("Cannot add Quantity and non-Quantity, use .to('unit').magnitude to strip units first")
+            raise ValueError(
+                "Cannot add Quantity and non-Quantity, use .to('unit').magnitude to strip units first"
+            )
         assert self.unit.unit_type == __o.unit.unit_type
 
         # Convert other unit to this unit, then create new Quantity
-        return Quantity(self.magnitude + (__o.magnitude * __o.unit.conversion_factor(self.unit)), self.unit)
+        return Quantity(
+            self.magnitude + (__o.magnitude * __o.unit.conversion_factor(self.unit)),
+            self.unit,
+        )
 
     def __neg__(self) -> Quantity:
         """Unary negation of the obect, as in -1"""
@@ -114,8 +130,6 @@ class Quantity:
         conversion_factor, simplified_new_unit = (self.unit / __o.unit).simplify()
         return Quantity(divided_magnitude * conversion_factor, simplified_new_unit)
 
-
-
     # # TODO
     # object.__truediv__(self, other)
     # object.__floordiv__(self, other)
@@ -136,13 +150,13 @@ class Quantity:
         return Quantity(round(self.magnitude, ndigits), self.unit)
 
     def __trunc__(self):
-        return Quantity(trunc(self.magnitude), self.unit)
+        return Quantity(math.trunc(self.magnitude), self.unit)
 
     def __floor__(self):
-        return Quantity(floor(self.magnitude), self.unit)
+        return Quantity(math.floor(self.magnitude), self.unit)
 
     def __ceil__(self):
-        return Quantity(ceil(self.magnitude), self.unit)
+        return Quantity(math.ceil(self.magnitude), self.unit)
 
     def __complex__(self) -> complex:
         """Return a complex number with the imaginary component as 0"""

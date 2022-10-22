@@ -1,5 +1,6 @@
 # Pintless
 [![CodeFactor](https://www.codefactor.io/repository/github/stephenwattam/pintless/badge)](https://www.codefactor.io/repository/github/stephenwattam/pintless)
+![Linting and building](https://github.com/StephenWattam/pintless/actions/workflows/python-package.yml/badge.svg)
 
 The unit library [pint](https://github.com/hgrecco/pint) is fantastic.  It removes a whole class of bugs from common data science workloads, and provides good tools for humans to process numbers.  But it's very slow, and provides vast swaths of functionality that I don't need.
 

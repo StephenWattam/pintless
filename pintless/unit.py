@@ -193,7 +193,7 @@ class Unit:
 
         assert isinstance(
             target_unit, Unit
-        ), f"Cannot compute conversion factor between unit and non-unit values"
+        ), "Cannot compute conversion factor between unit and non-unit values"
 
         assert (
             self.numerator_unit_types == target_unit.numerator_unit_types
@@ -265,7 +265,7 @@ class Unit:
 
     __rmul__ = __mul__
 
-    def __truediv__(self, __o: Unit) -> Union[None, Unit, UnitProduct]:
+    def __truediv__(self, __o: Unit) -> Unit:
         """Divide these units by other units"""
 
         assert isinstance(__o, Unit), "Cannot divide unit by non-unit"

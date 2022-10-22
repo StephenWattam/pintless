@@ -1,2 +1,3 @@
 [flake8]
+exclude = benchmark.py,basic_test.py,tests,benchmarks,setup.py,.git,__pycache__,docs/source/conf.py,old,build,dist
 max-line-length = 160
