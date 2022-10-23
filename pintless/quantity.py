@@ -45,7 +45,6 @@ class Quantity:
             self.magnitude * self.unit.conversion_factor(target_unit), target_unit
         )
 
-    # def ito(self, target_unit: Union[str, Unit]) -> None:
     def ito(self, target_unit: Union[str, unit.Unit]) -> None:
         """In-place version of to"""
 
@@ -66,11 +65,11 @@ class Quantity:
         return self.magnitude.__bool__()
 
     def __eq__(self, __o: object) -> bool:
-        return (
-            isinstance(__o, Quantity)
-            and self.magnitude == __o.magnitude
-            and self.unit == __o.unit
-        )
+        if isinstance(__o, Quantity):
+            return self.magnitude == __o.magnitude and self.unit == __o.unit
+
+        # Else assume the other value is dimensionless
+        return Quantity(__o, self.unit.dimensionless_unit) == self
 
     def __lt__(self, __o: object) -> bool:
         return isinstance(
@@ -79,16 +78,20 @@ class Quantity:
 
     def __add__(self, __o: object) -> Quantity:
         if not isinstance(__o, Quantity):
-            raise ValueError(
-                "Cannot add Quantity and non-Quantity, use .to('unit').magnitude to strip units first"
+            return self + Quantity(__o, self.unit.dimensionless_unit)
+
+        if self.unit.unit_type != __o.unit.unit_type:
+            raise TypeError(
+                f"Cannot sum quantities of different dimensionalities: {self.unit.unit_type} != {__o.unit.unit_type}"
             )
-        assert self.unit.unit_type == __o.unit.unit_type
 
         # Convert other unit to this unit, then create new Quantity
         return Quantity(
             self.magnitude + (__o.magnitude * __o.unit.conversion_factor(self.unit)),
             self.unit,
         )
+
+    __radd__ = __add__
 
     def __neg__(self) -> Quantity:
         """Unary negation of the obect, as in -1"""
@@ -125,10 +128,19 @@ class Quantity:
             # Assume it's a magnitude.  Maybe warn on this condition?
             __o = Quantity(__o, self.unit.dimensionless_unit)
 
-        # divide, then simplify.
-        divided_magnitude = self.magnitude / __o.magnitude
-        conversion_factor, simplified_new_unit = (self.unit / __o.unit).simplify()
-        return Quantity(divided_magnitude * conversion_factor, simplified_new_unit)
+        # If this has a denominator, flip it and then multiply it using the other mult rules.
+        # (a / b) / (c / d) == ad / bc
+        new_numerators = self.unit.numerator_units + __o.unit.denominator_units
+        new_denominators = self.unit.denominator_units + __o.unit.numerator_units
+
+        conversion_factor, new_unit = unit.Unit(
+            new_numerators,
+            new_denominators,
+            self.unit.dimensionless_base_unit,
+            self.unit.registry,
+        ).simplify()
+
+        return Quantity((self.magnitude / __o.magnitude) * conversion_factor, new_unit)
 
     # # TODO
     # object.__truediv__(self, other)

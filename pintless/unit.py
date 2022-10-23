@@ -139,6 +139,8 @@ class Unit:
         the method returns two items: a conversion factor that operates in the same way
         as .conversion_factor(), and the resulting Unit instance itself."""
 
+        print(f"Simplify: {self}")
+
         def first_index(lst, unit_type: str):
             for i, u in enumerate(lst):
                 if u.unit_type == unit_type:
@@ -159,12 +161,15 @@ class Unit:
             # Find a unit with the correct type in the numerator and cancel it.
             index_to_cancel = first_index(new_numerator, denom_unit.unit_type)
             if index_to_cancel is not None:
+                print(f" - {new_numerator[index_to_cancel]} TO {denom_unit} == {new_numerator[index_to_cancel].conversion_factor(denom_unit, self.dimensionless_base_unit)}")
                 conversion_factor *= new_numerator[index_to_cancel].conversion_factor(
                     denom_unit, self.dimensionless_base_unit
                 )
                 del new_numerator[index_to_cancel]
             else:
                 new_denominator.append(denom_unit)
+
+        print(f"CF: {conversion_factor}")
 
         # Special case where we have x/x remaining
         if len(new_numerator) == len(new_denominator) and all(
