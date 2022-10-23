@@ -10,6 +10,7 @@ setup(name='pintless',
       url='tbd',
       packages=[],
       extras_require={
+        'dev': ['flake8'],
         'test': [
             'pytest',
             'pytest-cov'
