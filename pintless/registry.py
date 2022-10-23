@@ -117,8 +117,13 @@ class Registry:
             ), f"No base unit defined for unit type {utype}"
 
         assert (
-            "dimensionless" in self.units
+            DIMENSIONLESS_UNIT_NAME in self.units
         ), f"A unit with name '{DIMENSIONLESS_UNIT_NAME}' must be defined"
+
+        self.dimensionless_unit = Unit([], [], self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
+            self if self.link_to_registry else None,
+            None
+        )
 
         # Define the "multiply method" on this registry
         for unit_name in self.units:
@@ -159,6 +164,7 @@ class Registry:
             [self._get_base_unit(u) for u in denominator_unit_list],
             self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
             self if self.link_to_registry else None,
+            self.dimensionless_unit
         )
 
     @lru_cache

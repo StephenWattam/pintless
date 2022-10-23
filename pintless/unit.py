@@ -81,7 +81,8 @@ class Unit:
         numerator_units: List[BaseUnit],
         denominator_units: List[BaseUnit],
         dimensionless_base_unit: BaseUnit,
-        registry: Optional[pintless.registry.Registry]
+        registry: Optional[pintless.registry.Registry],
+        dimensionless_unit: Optional[Unit] = None
     ) -> None:
 
         self.registry = registry
@@ -89,8 +90,12 @@ class Unit:
 
         if len(numerator_units) == 0 and len(denominator_units) == 0:
             self.dimensionless_unit = self
+        elif dimensionless_unit is not None:
+            # Use arg if provided: this is an optimisation to share references
+            # to the dimensionless unit
+            self.dimensionless_unit = dimensionless_unit
         else:
-            # FIXME: this gets run too much: use some kind of argument to pass it in
+            # Else create a new one.
             self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit, self.registry)
 
         # Remove dimensionless units.
