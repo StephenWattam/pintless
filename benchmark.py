@@ -9,7 +9,7 @@ import time
 def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
-    for _ in range(100_000_000):
+    for _ in range(100_000):
 
         # Basic arithmetic
         length_a = 10 * r.meter
@@ -26,8 +26,9 @@ def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
         result = length_b.to("mile")
         # result = r.get_unit("mile / hour")
 
-        end = time.time()
-        return end - start
+    end = time.time()
+
+    return end - start
 
 
 pintful_reg = UnitRegistry()
