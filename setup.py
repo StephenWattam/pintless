@@ -10,7 +10,6 @@ setup(name='pintless',
       url='https://github.com/StephenWattam/pintless',
       packages=['pintless'],
       package_data={'pintless': ['pintless/default_units.json']},
-      include_package_data=True,
       extras_require={
         'dev': ['flake8'],
         'test': [
