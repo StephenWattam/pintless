@@ -41,7 +41,3 @@ class UnitTest(unittest.TestCase):
         self.assertEqual((10 * r.km) / (20 * r.km), 0.5 * r.dimensionless)
         self.assertEqual((10 * r.km) / (20 * r.meter), 500)
         self.assertEqual((10 * r.km) * (5 * r.meter), 50 * r.km * r.meter)
-
-
-        # print(f"Cancelling: {distance/distance} and {time/time} and {mh50 / mh50}")
-        # print(f"Cancelling with conversion: ")
