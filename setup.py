@@ -7,8 +7,8 @@ setup(name='pintless',
       description='Simple and performant unit library for python',
       author='Steve Wattam',
       author_email='steve@watt.am',
-      url='tbd',
-      packages=[],
+      url='https://github.com/StephenWattam/pintless',
+      packages=['pintless'],
       extras_require={
         'dev': ['flake8'],
         'test': [
