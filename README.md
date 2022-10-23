@@ -36,6 +36,14 @@ Design Principles
  - Compilation to C
 
 
+## Benchmarking
+A small benchmark script is in the root of this repository, `benchmark.py`.  To run (and visualise the output using [snakeviz](https://jiffyclub.github.io/snakeviz/):
+
+    python -m cProfile -o both.prof benchmark.py
+    snakeviz both.prof
+
+The benchmark is dead simple, and prioritises repeated simple actions (as per a lot of processing workloads).
+
 Operators to support
 
     op1 = (operator.neg, operator.truth)
