@@ -5,7 +5,7 @@ from .unit import BaseUnit, Unit
 import logging
 from typing import Optional
 
-DEFAULT_DEFINITION_FILE = "units.json"
+DEFAULT_DEFINITION_FILE = "default_units.json"
 PREFIX_KEY = "__prefixes__"
 DIMENSIONLESS_UNIT_NAME = "dimensionless"
 MULTIPLY_TOKEN = "__multiply__"
