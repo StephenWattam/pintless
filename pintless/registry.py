@@ -79,7 +79,7 @@ class Registry:
 
                     for prefix, prefix_multiplier in prefixes.items():
                         self.derived_types[prefix + unit_name] = (
-                            numerator_list,
+                            [prefix + numerator_list[0]] + numerator_list[1:],
                             denominator_list,
                         )
                         if prefix + unit_name in self.units:
@@ -165,9 +165,8 @@ class Registry:
     def _get_base_unit(self, base_unit_name: str) -> BaseUnit:
         """Return a simple base unit type.  Used to construct units."""
 
-        assert (
-            base_unit_name not in self.derived_types
-        ), f"Cannot instantiate base unit '{base_unit_name}', as it is a derived type"
+        if base_unit_name in self.derived_types:
+            raise ValueError(f"Cannot instantiate base unit '{base_unit_name}', as it is a derived type")
 
         # Base case, the unit itself
         unit_type = self.utype_for_unit[base_unit_name]

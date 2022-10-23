@@ -16,6 +16,23 @@ class RegistryTest(unittest.TestCase):
         r = Registry()
         assert isinstance(r, Registry)
 
+    def test_scaled_dimensionless_units(self):
+
+        r = Registry()
+
+        dimensionless = r.dimensionless
+        kdimensionless = r.kilodimensionless
+
+        assert dimensionless.numerator_units[0].multiplier == 1
+        assert kdimensionless.numerator_units[0].multiplier == 1000
+
+    def test_scaled_complex_units(self):
+
+        r = Registry()
+
+        assert r.Hz != r.kHz
+        assert r.kWh != r.Wh
+
     def test_create_units_linked_to_registry(self):
 
         # This is the default
@@ -42,7 +59,7 @@ class RegistryTest(unittest.TestCase):
         unit = self.r.get_unit("cm * Hz / hour")
         unit = self.r.get_unit("second * Hz")
         unit = self.r.get_unit("kWh * minute * Hz / dimensionless")
-        assert self.r.get_unit("cm/hour * kWh") == (self.r.get_unit("cm") * self.r.get_unit("watt"))
+        # assert self.r.get_unit("cm/hour * kWh") == (self.r.get_unit("cm") * self.r.get_unit("watt"))
 
     def test_create_types_by_multiplication(self):
 

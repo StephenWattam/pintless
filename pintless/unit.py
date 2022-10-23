@@ -33,15 +33,14 @@ class BaseUnit:
         self, target_unit: BaseUnit, dimensionless_unit: BaseUnit
     ) -> float:
 
-        if (
-            self.unit_type == dimensionless_unit.unit_type
-            or target_unit.unit_type == dimensionless_unit.unit_type
-        ):
-            return 1
+        # if (
+        #     self.unit_type == dimensionless_unit.unit_type):
+        #     or target_unit.unit_type == dimensionless_unit.unit_type
+        # ):
+        #     return 1 # FIXME: self.multiplier * 1 / target_unit.multiplier
 
-        assert (
-            self.unit_type == target_unit.unit_type
-        ), f"Cannot convert between units of different types ({self.unit_type} != {target_unit.unit_type}"
+        if self.unit_type != target_unit.unit_type:
+            raise TypeError(f"Cannot convert between units of different types ({self.unit_type} != {target_unit.unit_type}")
 
         # convert to the base unit, then convert from that base unit to the new unit
         conversion_factor = self.multiplier * 1 / target_unit.multiplier
@@ -51,14 +50,14 @@ class BaseUnit:
         return self.__str__()
 
     def __str__(self) -> str:
-        return f"<BaseUnit('{self.name}')>"
+        return f"<BaseUnit('{self.name} = {self.multiplier} * {self.base_unit}')>"
 
     def __hash__(self) -> int:
         return hash((self.name, self.unit_type, self.base_unit, self.multiplier))
 
     def __eq__(self, __o: object) -> bool:
         return (
-            isinstance(__o, Unit)
+            isinstance(__o, BaseUnit)
             and self.name == __o.name
             and self.unit_type == __o.unit_type
             and self.base_unit == __o.base_unit
@@ -91,18 +90,19 @@ class Unit:
         if len(numerator_units) == 0 and len(denominator_units) == 0:
             self.dimensionless_unit = self
         else:
+            # FIXME: this gets run too much: use some kind of argument to pass it in
             self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit, self.registry)
 
         # Remove dimensionless units.
         numerator_units = [
             u
             for u in numerator_units
-            if u.unit_type != self.dimensionless_base_unit.unit_type
+            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
         ]
         denominator_units = [
             u
             for u in denominator_units
-            if u.unit_type != self.dimensionless_base_unit.unit_type
+            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
         ]
 
         if len(numerator_units) == 0:
@@ -191,22 +191,21 @@ class Unit:
 
         This method is used by Quantity() to update values."""
 
-        assert isinstance(
-            target_unit, Unit
-        ), "Cannot compute conversion factor between unit and non-unit values"
+        # print(f"Computing conversion factor from unit {self} to unit {target_unit}")
 
-        assert (
-            self.numerator_unit_types == target_unit.numerator_unit_types
-        ), f"Numerator types for object a ({self.numerator_unit_types}) do not match numerator types for object b ({target_unit.numerator_unit_types})"
-        assert (
-            self.denominator_unit_types == target_unit.denominator_unit_types
-        ), f"Numerator types for object a ({self.denominator_unit_types}) do not match denominator types for object b ({target_unit.denominator_unit_types})"
+        if not isinstance(target_unit, Unit):
+            raise TypeError("Cannot compute conversion factor between unit and non-unit values")
+        if self.numerator_unit_types != target_unit.numerator_unit_types:
+            raise TypeError(f"Numerator types for object a ({self.numerator_unit_types}) do not match numerator types for object b ({target_unit.numerator_unit_types})")
+        if self.denominator_unit_types != target_unit.denominator_unit_types:
+            raise TypeError(f"Numerator types for object a ({self.denominator_unit_types}) do not match denominator types for object b ({target_unit.denominator_unit_types})")
 
         # Conversion factor for the numerator
         numerator_conversion_factor = 1
         for base_unit_from, base_unit_to in zip(
             self.numerator_units, target_unit.numerator_units
         ):
+            # print(f"NCONV: {base_unit_from} TO {base_unit_to}")
             numerator_conversion_factor *= base_unit_from.conversion_factor(
                 base_unit_to, self.dimensionless_base_unit
             )
@@ -214,8 +213,9 @@ class Unit:
         # Conversion factor for all the multiplied denominator items
         denominator_conversion_factor = 1
         for base_unit_from, base_unit_to in zip(
-            self.denominator_units, target_unit.numerator_units
+            self.denominator_units, target_unit.denominator_units
         ):
+            # print(f"DCONV: {base_unit_from} TO {base_unit_to}")
             denominator_conversion_factor *= base_unit_from.conversion_factor(
                 base_unit_to, self.dimensionless_base_unit
             )
@@ -233,10 +233,14 @@ class Unit:
         ):
             return False
 
-        # Check the same units exist in numerator and denominator
-        return set(self.numerator_units) == set(self.numerator_units) and set(
-            self.denominator_units
-        ) == set(self.denominator_units)
+        for a, b in zip(self.numerator_units, __o.numerator_units):
+            if a != b:
+                return False
+        for a, b in zip(self.denominator_units, __o.denominator_units):
+            if a != b:
+                return False
+
+        return True
 
     # Set operations make this expensive, so cache the response
     @lru_cache
