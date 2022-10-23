@@ -10,7 +10,7 @@ setup(name='pintless',
       url='tbd',
       packages=[],
       extras_require={
-        'dev': [
+        'test': [
             'pytest',
             'pytest-cov'
         ]
