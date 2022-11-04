@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Union
 import math
 
+from collections.abc import Iterable
 import pintless.unit as unit
 
 
@@ -41,9 +42,13 @@ class Quantity:
                 )
             target_unit = self.unit.registry.get_unit(target_unit)
 
-        return Quantity(
-            self.magnitude * self.unit.conversion_factor(target_unit), target_unit
-        )
+        conversion_factor = self.unit.conversion_factor(target_unit)
+        if isinstance(self.magnitude, list):
+            new_magnitude = [x * conversion_factor for x in self.magnitude]
+        else:
+            new_magnitude = self.magnitude * conversion_factor
+
+        return Quantity(new_magnitude, target_unit)
 
     def ito(self, target_unit: Union[str, unit.Unit]) -> None:
         """In-place version of to"""
@@ -78,6 +83,10 @@ class Quantity:
 
     def __add__(self, __o: object) -> Quantity:
         if not isinstance(__o, Quantity):
+
+            if __o == 0:
+                return self
+
             return self + Quantity(__o, self.unit.dimensionless_unit)
 
         if self.unit.unit_type != __o.unit.unit_type:
@@ -92,6 +101,27 @@ class Quantity:
         )
 
     __radd__ = __add__
+
+    def __sub__(self, __o: object) -> Quantity:
+        if not isinstance(__o, Quantity):
+
+            if __o == 0:
+                return self
+
+            return self - Quantity(__o, self.unit.dimensionless_unit)
+
+        if self.unit.unit_type != __o.unit.unit_type:
+            raise TypeError(
+                f"Cannot subtract quantities of different dimensionalities: {self.unit.unit_type} != {__o.unit.unit_type}"
+            )
+
+        # Convert other unit to this unit, then create new Quantity
+        return Quantity(
+            self.magnitude - (__o.magnitude * __o.unit.conversion_factor(self.unit)),
+            self.unit,
+        )
+
+    __rsub__ = __sub__
 
     def __neg__(self) -> Quantity:
         """Unary negation of the obect, as in -1"""
@@ -116,17 +146,27 @@ class Quantity:
             # Assume it's a magnitude.  Maybe warn on this condition?
             __o = Quantity(__o, self.unit.dimensionless_unit)
 
-        multiplied_magnitude = self.magnitude * __o.magnitude
-        conversion_factor, simplified_new_unit = (self.unit * __o.unit).simplify()
         # Units have multiply logic built in, and numbers do: 10s * 5kW = 50kW*s
-        return Quantity(multiplied_magnitude * conversion_factor, simplified_new_unit)
+        conversion_factor, simplified_new_unit = (self.unit * __o.unit).simplify()
+        if isinstance(self.magnitude, list):
+            assert not isinstance(__o.magnitude, list), "Cannot multiply two list types"
+            new_magnitude = [x * __o.magnitude * conversion_factor for x in self.magnitude]
+        else:
+            new_magnitude = self.magnitude * __o.magnitude * conversion_factor
+
+        return Quantity(new_magnitude, simplified_new_unit)
+
+    __rmul__ = __mul__
 
     def __truediv__(self, __o: object) -> Quantity:
         """'true' division, where 2/3 is 0.66 rather than 0"""
 
         if not isinstance(__o, Quantity):
-            # Assume it's a magnitude.  Maybe warn on this condition?
-            __o = Quantity(__o, self.unit.dimensionless_unit)
+            if isinstance(__o, unit.Unit):
+                __o = Quantity(1, __o)
+            else:
+                # Assume it's a magnitude.  Maybe warn on this condition?
+                __o = Quantity(__o, self.unit.dimensionless_unit)
 
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
@@ -140,7 +180,44 @@ class Quantity:
             self.unit.registry,
         ).simplify()
 
-        return Quantity((self.magnitude / __o.magnitude) * conversion_factor, new_unit)
+        # print(f"=> {conversion_factor}, {new_unit}: {self.magnitude}/{__o.magnitude}")
+
+        if isinstance(self.magnitude, list):
+            new_magnitude = [(x / __o.magnitude) * conversion_factor for x in self.magnitude]
+        else:
+            new_magnitude = (self.magnitude / __o.magnitude) * conversion_factor
+
+        return Quantity(new_magnitude, new_unit)
+
+    def __iter__(self):
+
+        class QuantityIterator:
+
+            def __init__(self, unit: unit.Unit, iterator):
+                self.unit = unit
+                self.iterator = iterator
+
+            def __iter__(self):
+                self.iterator
+
+            def __next__(self):
+                return next(self.iterator) * self.unit
+
+        return QuantityIterator(self.unit, iter(self.magnitude))
+
+    def __getitem__(self, i: int) -> Quantity:
+        return self.magnitude[i] * self.unit
+
+    def __len__(self) -> int:
+        return len(self.magnitude)
+
+    def __ge__(self, __o) -> bool:
+        if not isinstance(__o, Quantity):
+            if __o == 0:
+                return self.magnitude > 0
+            raise TypeError(f"Cannot compare Quantity and '{type(__o)}'")
+        return self.magnitude > __o.to(self.unit).magnitude
+
 
     # # TODO
     # object.__truediv__(self, other)

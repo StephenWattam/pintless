@@ -3,7 +3,8 @@ import json
 from functools import lru_cache
 from .unit import BaseUnit, Unit
 import logging
-from typing import Optional
+from typing import Optional, Any
+import pintless.quantity
 
 DEFAULT_DEFINITION_FILE = "default_units.json"
 PREFIX_KEY = "__prefixes__"
@@ -16,6 +17,9 @@ log = logging.getLogger()
 
 
 class Registry:
+
+    Quantity = pintless.quantity.Quantity
+
     def __init__(
         self, definition_filename: Optional[str] = None, link_to_registry: bool = True
     ):
@@ -128,6 +132,12 @@ class Registry:
         # Define the "multiply method" on this registry
         for unit_name in self.units:
             setattr(self, unit_name, self.get_unit(unit_name))
+
+    def __call__(self, *args: Any, **kwds: Any) -> Any:
+        assert len(args) == 1
+        assert len(kwds) == 0
+
+        return self.get_unit(args[0])
 
     @lru_cache
     def get_unit(self, unit_name: str, support_expressions: bool = True) -> Unit:

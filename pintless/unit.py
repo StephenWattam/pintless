@@ -274,6 +274,12 @@ class Unit:
 
     __rmul__ = __mul__
 
+    def __pow__(self, __o: int) -> Unit:
+        val = self
+        for i in range(__o):
+            val = val * self
+        return val
+
     def __truediv__(self, __o: Unit) -> Unit:
         """Divide these units by other units"""
 

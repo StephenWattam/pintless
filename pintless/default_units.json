@@ -91,6 +91,17 @@
         "d": 86400
     },
 
+    "volume": {
+        "litre": 1,
+        "litres": 1,
+        "liter": 1
+    },
+
+    "temperature": {
+        "kelvin": 1,
+        "degC": 1
+    },
+
     "current": {
         "amp": 1,
         "A": 1
@@ -109,6 +120,7 @@
     },
 
     "energy": {
+        "joule": {"numerator": ["watt"], "denominator": ["second"]},
         "Wh": {"numerator": ["watt", "hour"]},
         "watt_hour": {"numerator": ["watt", "hour"]}
     },
@@ -119,8 +131,12 @@
     },
 
     "currency": {
+        "USD": 1,
+        "EUR": 1,
         "GBP": 1,
+        "JPY": 1,
         "pence": 0.01,
+        "cent": 0.01,
         "p": 0.01
     }
 
