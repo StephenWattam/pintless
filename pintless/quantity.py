@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Union
+from typing import Union, Any
 import math
 
 from collections.abc import Iterable
@@ -16,7 +16,11 @@ class Quantity:
     Quantity objects can have their values extracted using .magnitude(), and can be converted
     to new units using .to() or .ito().  This follows the API established by the pint library."""
 
-    def __init__(self, magnitude, unit) -> None:
+    def __init__(self, magnitude: Any, unit: unit.Unit) -> None:
+
+        if isinstance(unit, str):
+            raise TypeError("Cannot instantiate a Quantity object using a string expression as a unit: use the unit registry to do this instead.")
+
         self.magnitude = magnitude
         self._set_unit(unit)
 
@@ -66,12 +70,15 @@ class Quantity:
     # https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
 
     def __bool__(self) -> bool:
-        # This is valid because this lib doesn't support non-0-centred values
+        # This is valid because this lib doesn't support non-0-centred values (e.g. Celsius, Farenheit)
         return self.magnitude.__bool__()
 
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, Quantity):
-            return self.magnitude == __o.magnitude and self.unit == __o.unit
+            try:
+                return (self.magnitude == __o.magnitude and self.unit == __o.unit) or self.to(__o.unit).magnitude == __o.magnitude
+            except TypeError:
+                return False
 
         # Else assume the other value is dimensionless
         return Quantity(__o, self.unit.dimensionless_unit) == self

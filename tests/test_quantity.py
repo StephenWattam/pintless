@@ -10,6 +10,15 @@ class QuantityTest(unittest.TestCase):
     def setUp(self) -> None:
         self.r = Registry()
 
+    def test_no_string_instantiation(self):
+        """To create a Quantity from an expression, we must use a registry"""
+
+        # This should not work
+        with self.assertRaises(TypeError):
+            Quantity(4.0, "kWh / mile")
+        # But this should
+        assert 4.0 * self.r.kWh / self.r.mile == self.r("4.0 kWh / mile")
+
     def test_create_types_by_multiplication(self):
 
         r = self.r
@@ -40,6 +49,12 @@ class QuantityTest(unittest.TestCase):
         cm = qmetres.to(r.cm)
         assert cm.magnitude == 10 * 100
 
+    def test_mix_quantities_and_units(self):
+
+        q = 10 * self.r.m
+        u = self.r.second
+
+        self.assertEqual(q * u, u * q)
 
     def test_add_quantities(self):
 

@@ -3,6 +3,20 @@ import unittest
 
 from pintless import Registry, Quantity, Unit
 
+class BaseUnitTest(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.r = Registry()
+
+    def test_base_unit_equality(self):
+        """Base units are the same if they are the same multiplier on top of
+        the same base unit.
+
+        This implies they have the same dimensionality"""
+
+        base_kw = self.r.kW.numerator_units[0]
+        base_kw2 = self.r.kilowatt.numerator_units[0]
+        assert base_kw == base_kw2
 
 class UnitTest(unittest.TestCase):
 
@@ -15,6 +29,20 @@ class UnitTest(unittest.TestCase):
         assert unit.dimensionless_unit == self.r.get_unit("")
         assert unit.dimensionless_unit == (unit / unit)
 
+    def test_derived_unit_conversion(self):
+
+        l = 1 * self.r.litre
+        vol = 0.001 * self.r.m * self.r.m * self.r.m
+        vol2 = 1 * self.r.dm * self.r.dm * self.r.dm
+        self.assertAlmostEqual(vol.to("litre").magnitude, l.magnitude)
+        self.assertAlmostEqual(vol2.to("litre").magnitude, l.magnitude)
+        # import code; code.interact(local=locals())
+
+    def test_power_operator(self):
+
+        assert self.r.m ** 1 == self.r.m
+        assert self.r.m ** 2 == self.r.m * self.r.m
+        assert self.r.m ** 3 == self.r.m * self.r.m * self.r.m
 
     def test_equality(self):
 

@@ -56,9 +56,9 @@ class BaseUnit:
         return hash((self.name, self.unit_type, self.base_unit, self.multiplier))
 
     def __eq__(self, __o: object) -> bool:
+        """Units are the same if their multiplier, base unit, and dimension are the same."""
         return (
             isinstance(__o, BaseUnit)
-            and self.name == __o.name
             and self.unit_type == __o.unit_type
             and self.base_unit == __o.base_unit
             and self.multiplier == __o.multiplier
@@ -82,7 +82,8 @@ class Unit:
         denominator_units: List[BaseUnit],
         dimensionless_base_unit: BaseUnit,
         registry: Optional[pintless.registry.Registry],
-        dimensionless_unit: Optional[Unit] = None
+        dimensionless_unit: Optional[Unit] = None,
+        alias: Optional[str] = None
     ) -> None:
 
         self.registry = registry
@@ -126,14 +127,17 @@ class Unit:
         self.unit_type = f"{'*'.join([u.unit_type for u in self.numerator_units])}/{'*'.join([u.unit_type for u in self.denominator_units])}"
 
         # Generate name
-        self.name = f"{'*'.join([u.name for u in self.numerator_units])}"
-        if not all(
-            [
-                u.unit_type == self.dimensionless_base_unit.unit_type
-                for u in self.denominator_units
-            ]
-        ):
-            self.name += f"/{'*'.join([u.name for u in self.denominator_units])}"
+        if alias is None:
+            self.name = f"{'*'.join([u.name for u in self.numerator_units])}"
+            if not all(
+                [
+                    u.unit_type == self.dimensionless_base_unit.unit_type
+                    for u in self.denominator_units
+                ]
+            ):
+                self.name += f"/{'*'.join([u.name for u in self.denominator_units])}"
+        else:
+            self.name = alias
 
     def simplify(self) -> Tuple[float, Unit]:
         """Cancel denominator and numerator units, resulting in the simplest
@@ -201,9 +205,9 @@ class Unit:
         if not isinstance(target_unit, Unit):
             raise TypeError("Cannot compute conversion factor between unit and non-unit values")
         if self.numerator_unit_types != target_unit.numerator_unit_types:
-            raise TypeError(f"Numerator types for object a ({self.numerator_unit_types}) do not match numerator types for object b ({target_unit.numerator_unit_types})")
+            raise TypeError(f"Numerator types for '{str(self)}' ({self.numerator_unit_types}) do not match numerator types for '{str(target_unit)}' ({target_unit.numerator_unit_types})")
         if self.denominator_unit_types != target_unit.denominator_unit_types:
-            raise TypeError(f"Numerator types for object a ({self.denominator_unit_types}) do not match denominator types for object b ({target_unit.denominator_unit_types})")
+            raise TypeError(f"Numerator types for  '{str(self)}' ({self.denominator_unit_types}) do not match denominator types for '{str(target_unit)}' ({target_unit.denominator_unit_types})")
 
         # Conversion factor for the numerator
         numerator_conversion_factor = 1
@@ -252,7 +256,7 @@ class Unit:
     def __hash__(self) -> int:
         return hash((set(self.numerator_units), set(self.denominator_units)))
 
-    def __mul__(self, __o: Union[Unit, ValidMagnitude]) -> Union[Unit, Quantity]:
+    def __mul__(self, __o: Union[Unit, ValidMagnitude, Quantity]) -> Union[Unit, Quantity]:
         """Return a quantity using this unit"""
 
         # If this is also a divided unit then the denominator has to have the same
@@ -269,6 +273,9 @@ class Unit:
             )
             return new_unit.simplify()[1]
 
+        if isinstance(__o, Quantity):
+            return __o * self
+
         # Must be some other (presumably numeric) quantity
         return Quantity(__o, self)
 
@@ -276,7 +283,7 @@ class Unit:
 
     def __pow__(self, __o: int) -> Unit:
         val = self
-        for i in range(__o):
+        for i in range(__o - 1):
             val = val * self
         return val
 

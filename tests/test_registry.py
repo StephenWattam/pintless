@@ -2,7 +2,7 @@
 
 import unittest
 
-from pintless import Registry, Quantity, Unit
+from pintless import Registry, Quantity, Unit, UndefinedUnitError
 
 
 class RegistryTest(unittest.TestCase):
@@ -15,6 +15,21 @@ class RegistryTest(unittest.TestCase):
         # With default units json
         r = Registry()
         assert isinstance(r, Registry)
+
+    def test_compound_unit_aliasing(self):
+        """Test basic (forward) aliasing: compound units have a simple name
+        assigned by the registry, and will serialise to this name.
+
+        This alias shouldn't affect any of the other comparisons"""
+
+        kwh = self.r.kWh
+        assert kwh.name == "kWh"
+        assert kwh == self.r.kW * self.r.H
+        assert self.r("kWh") == self.r("kW H")
+
+        hz = self.r.Hz
+        assert hz.name == "Hz"
+        assert hz * self.r.second == self.r.dimensionless_unit
 
     def test_scaled_dimensionless_units(self):
 
@@ -48,7 +63,7 @@ class RegistryTest(unittest.TestCase):
         assert unit == (10 * self.r.cm).unit
 
         # Unit that doesn't exist
-        with self.assertRaises(ValueError):
+        with self.assertRaises(UndefinedUnitError):
             unit = self.r.get_unit("noexisty")
 
         # Novel compound unit, created by arithmetic on existing units
@@ -60,6 +75,15 @@ class RegistryTest(unittest.TestCase):
         unit = self.r.get_unit("second * Hz")
         unit = self.r.get_unit("kWh * minute * Hz / dimensionless")
         # assert self.r.get_unit("cm/hour * kWh") == (self.r.get_unit("cm") * self.r.get_unit("watt"))
+
+    def test_create_quantities_from_string(self):
+        """Numeric values in expressions will cause the parser to return a Quantity."""
+
+        assert self.r.get_unit("4 kWh") == (self.r.kWh * 4)
+        assert self.r.get_unit("4 * kWh") == (self.r.kWh * 4)
+        assert self.r.get_unit("kW * H * 4") == (self.r.kWh * 4)
+        assert self.r.get_unit("kW H 4") == (self.r.kWh * 4)
+        assert self.r.get_unit("4 * 7") == 4 * 7 * self.r.dimensionless_unit
 
     def test_create_types_by_multiplication(self):
 
@@ -89,4 +113,3 @@ class RegistryTest(unittest.TestCase):
         assert qmetres.magnitude == 10
         cm = qmetres.to(r.cm)
         assert cm.magnitude == 10 * 100
-

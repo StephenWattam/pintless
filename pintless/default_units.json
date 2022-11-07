@@ -86,15 +86,16 @@
         "minute": 60,
         "M": 60,
         "hour": 3600,
+        "hours": 3600,
         "H": 3600,
         "day": 86400,
         "d": 86400
     },
 
     "volume": {
-        "litre": 1,
-        "litres": 1,
-        "liter": 1
+        "litre": {"numerator": ["m", "cm", "dm"]},
+        "litres": {"numerator": ["m", "cm", "dm"]},
+        "liter": {"numerator": ["m", "cm", "dm"]}
     },
 
     "temperature": {
@@ -120,9 +121,10 @@
     },
 
     "energy": {
-        "joule": {"numerator": ["watt"], "denominator": ["second"]},
+        "joule": {"numerator": ["watt", "second"]},
         "Wh": {"numerator": ["watt", "hour"]},
-        "watt_hour": {"numerator": ["watt", "hour"]}
+        "watt_hour": {"numerator": ["watt", "hour"]},
+        "watt_hours": {"numerator": ["watt", "hour"]}
     },
 
     "rate": {

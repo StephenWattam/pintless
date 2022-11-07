@@ -3,8 +3,9 @@ import json
 from functools import lru_cache
 from .unit import BaseUnit, Unit
 import logging
-from typing import Optional, Any
+from typing import Optional, Any, Union
 import pintless.quantity
+import pintless.errors as errors
 
 DEFAULT_DEFINITION_FILE = "default_units.json"
 PREFIX_KEY = "__prefixes__"
@@ -140,7 +141,7 @@ class Registry:
         return self.get_unit(args[0])
 
     @lru_cache
-    def get_unit(self, unit_name: str, support_expressions: bool = True) -> Unit:
+    def get_unit(self, unit_name: str, support_expressions: bool = True) -> Union[Unit, pintless.quantity.Quantity]:
         """Return a Unit for a given type.  The unit will not have a value attached
         as it would in a Quantity object.
 
@@ -160,7 +161,7 @@ class Registry:
             if support_expressions:
                 return self._parse_unit_expression(unit_name)
             else:
-                raise ValueError(f"Unit '{unit_name}' not round in registry")
+                raise errors.UndefinedUnitError(f"Unit '{unit_name}' not round in registry")
 
         # Load either a derived type or a basic type
         if unit_name in self.derived_types:
@@ -174,7 +175,8 @@ class Registry:
             [self._get_base_unit(u) for u in denominator_unit_list],
             self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
             self if self.link_to_registry else None,
-            self.dimensionless_unit
+            self.dimensionless_unit,
+            unit_name
         )
 
     @lru_cache
@@ -191,7 +193,7 @@ class Registry:
 
         return BaseUnit(base_unit_name, unit_type, base_type, multiplier)
 
-    def _parse_unit_expression(self, unit_expr: str) -> Unit:
+    def _parse_unit_expression(self, unit_expr: str) -> Union[Unit, pintless.quantity.Quantity]:
         """Parse an expression containing the following tokens:
 
          - unit name (any string without spaces)
@@ -209,7 +211,13 @@ class Registry:
                 return MULTIPLY_TOKEN
             if token == "/":
                 return DIVIDE_TOKEN
-            return self.get_unit(token, support_expressions=False)
+            if token in self.units:
+                return self.get_unit(token, support_expressions=False)
+            else:
+                try:
+                    return pintless.quantity.Quantity(float(token), self.dimensionless_unit)
+                except ValueError:
+                    raise errors.UndefinedUnitError(f"Unit '{token}' not found in registry")
 
         # Replace * and / with whitespace separated versions, then split on whitespace.
         # Saves use of regex libs
@@ -222,8 +230,8 @@ class Registry:
         if len(parts) == 0:
             return self.get_unit(DIMENSIONLESS_UNIT_NAME)
 
-        assert isinstance(parts[0], Unit), "Expressions must start with a unit name"
-        assert isinstance(parts[-1], Unit), "Expressions must end with a unit name"
+        assert isinstance(parts[0], (pintless.quantity.Quantity, Unit)), "Expressions must start with a unit name or quantity"
+        assert isinstance(parts[-1], (pintless.quantity.Quantity, Unit)), "Expressions must end with a unit name or quantity"
 
         # Because we apply operations left-to-right, we will bundle them into pairs
         # giving [(operation, unit)]
@@ -244,7 +252,7 @@ class Registry:
                         f"Repeated division token in expression token {i+2}: {part}"
                     )
                 current_op = DIVIDE_TOKEN
-            elif isinstance(part, Unit):
+            elif isinstance(part, (pintless.quantity.Quantity, Unit)):
                 if current_op is not None:
                     operations.append((current_op, part))
                     current_op = None
@@ -262,7 +270,7 @@ class Registry:
         current_value: Unit = parts[0]
         for operation, operand in operations:
             assert operation in [MULTIPLY_TOKEN, DIVIDE_TOKEN]
-            assert isinstance(operand, Unit)
+            assert isinstance(operand, (pintless.quantity.Quantity, Unit))
 
             if operation == MULTIPLY_TOKEN:
                 current_value = current_value * operand
