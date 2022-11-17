@@ -27,7 +27,6 @@ def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
         # Parsing strings
         result = length_a.to("inch")
         result = length_b.to("mile")
-        result = r.get_unit("mile / hour")
 
         # Some more arithmetic with just units
         l = 1 * r.litre
