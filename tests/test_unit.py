@@ -18,17 +18,43 @@ class BaseUnitTest(unittest.TestCase):
         base_kw2 = self.r.kilowatt.numerator_units[0]
         assert base_kw == base_kw2
 
+
 class UnitTest(unittest.TestCase):
 
     def setUp(self) -> None:
         self.r = Registry()
 
     def test_dimensionless_unit(self):
+        """A unit that represents no unit"""
 
-        unit = self.r.get_unit("meter")
-        assert unit.dimensionless_unit == self.r.get_unit("")
-        assert unit.dimensionless_unit == (unit / unit)
+        # Division by self should result in dimensionless unit
+        unit_strings = ["meter", "cm", "kWh", "GBP / (meter * meter)"]
+        for unit_str in unit_strings:
+            unit = self.r.get_unit(unit_str)
+            assert unit.dimensionless_unit == self.r.get_unit("")
+            assert unit.dimensionless_unit == (unit / unit)
 
+        # Create dimensionless unit using empty string, numbers, explicitly
+        assert self.r("") == self.r.dimensionless_unit
+        assert self.r("").dimensionless_unit == self.r.dimensionless_unit
+        assert self.r("4").unit == self.r.dimensionless_unit
+        assert str(self.r.dimensionless_unit) == "dimensionless"
+
+        # X / dimensionless = X
+        assert self.r.cm / self.r.dimensionless_unit == self.r.cm
+        assert self.r.kWh / self.r.dimensionless_unit == self.r.kWh
+
+
+    def test_unit_names(self):
+        """Test conversion to a string"""
+
+        # Alias behavour
+        assert str(self.r.kWh) == "kWh"
+
+        # Basic arithmetic
+        assert str(self.r.kW * self.r.hour) == "kW*hour"
+        assert str(self.r.kilowatt * self.r.hour) == "kilowatt*hour"
+        assert str(self.r.kW * self.r.hour / self.r.GBP) == "(kW*hour)/GBP"
 
     def test_dimensionality_check(self):
         """A relaxed form of equality, this can be used to check that one unit

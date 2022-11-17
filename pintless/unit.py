@@ -130,14 +130,18 @@ class Unit:
         # Generate name if one is not given
         if alias is None:
             self.name = f"{'*'.join([u.name for u in self.numerator_units])}"
-            if len(self.numerator_units) > 1:
-                self.name = f"({self.name})"
+
+            # If we have denominators
             if not all(
                 [
                     u.unit_type == self.dimensionless_base_unit.unit_type
                     for u in self.denominator_units
                 ]
             ):
+
+                if len(self.numerator_units) > 1:
+                    self.name = f"({self.name})"
+
                 denom_name = '*'.join([u.name for u in self.denominator_units])
                 if len(denominator_units) > 1:
                     denom_name = f"({denom_name})"
