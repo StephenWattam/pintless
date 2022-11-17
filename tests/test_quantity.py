@@ -111,3 +111,15 @@ class QuantityTest(unittest.TestCase):
         assert 100 == 100 * r.dimensionless
         assert 100.0 == 100.0 * r.dimensionless
         assert "non-numeric-value" == "non-numeric-value" * r.dimensionless
+
+    def test_list_types(self):
+        """Quantities support limited operations on lists"""
+
+        self.assertEqual([1, 2, 3] * self.r.kWh, Quantity([1,2,3], self.r.kWh))
+        self.assertEqual([1000, 2000, 3000], ([1, 2, 3] * self.r.kWh).m_as(self.r.watt * self.r.hour))
+
+        list_quantity_cm = [1, 2, 3] * self.r.cm
+        list_quantity_inches = [4, 5, 6] * self.r.inch
+        with self.assertRaises(AssertionError):
+            list_quantity_cm * list_quantity_inches
+        self.assertListEqual(list_quantity_cm.to(self.r("inch")).magnitude, [Quantity(x, self.r.cm).to(self.r.inch).magnitude for x in [1, 2, 3]])
