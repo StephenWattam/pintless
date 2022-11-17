@@ -123,31 +123,61 @@ class Unit:
         if len(self.denominator_units) == 0:
             self.denominator_units = [self.dimensionless_base_unit]
 
-        self.numerator_unit_types = [u.unit_type for u in self.numerator_units]
-        self.denominator_unit_types = [u.unit_type for u in self.denominator_units]
-        self.unit_type = f"{'*'.join(self.numerator_unit_types)}/{'*'.join(self.denominator_unit_types)}"
+        self._numerator_unit_types = None
+        self._denominator_unit_types = None
+        self._unit_type = None
 
-        # Generate name if one is not given
-        if alias is None:
-            self.name = f"{'*'.join([u.name for u in self.numerator_units])}"
+        # If this is None, it will be generated on first access
+        self._name = alias
 
-            # If we have denominators
-            if not all(
-                [
-                    u.unit_type == self.dimensionless_base_unit.unit_type
-                    for u in self.denominator_units
-                ]
-            ):
+    @property
+    def numerator_unit_types(self) -> Tuple[str]:
+        if self._numerator_unit_types is not None:
+            return self._numerator_unit_types
 
-                if len(self.numerator_units) > 1:
-                    self.name = f"({self.name})"
+        self._numerator_unit_types = tuple(u.unit_type for u in self.numerator_units)
+        return self._numerator_unit_types
 
-                denom_name = '*'.join([u.name for u in self.denominator_units])
-                if len(denominator_units) > 1:
-                    denom_name = f"({denom_name})"
-                self.name += f"/{denom_name}"
-        else:
-            self.name = alias
+    @property
+    def denominator_unit_types(self) -> Tuple[str]:
+        if self._denominator_unit_types is not None:
+            return self._denominator_unit_types
+
+        self._denominator_unit_types = tuple(u.unit_type for u in self.denominator_units)
+        return self._denominator_unit_types
+
+    @property
+    def unit_type(self) -> str:
+        if self._unit_type is not None:
+            return self._unit_type
+
+        self._unit_type = f"{'*'.join(self.numerator_unit_types)}/{'*'.join(self.denominator_unit_types)}"
+        return self._unit_type
+
+    @property
+    def name(self) -> str:
+        """Return the name of this unit.
+
+        Generating this on instantiation costs performance, so this is computed on first call
+        and cached."""
+
+        if self._name is not None:
+            return self._name
+
+        self._name = f"{'*'.join(u.name for u in self.numerator_units)}"
+
+        # If we have denominators
+        if not all(u.unit_type == self.dimensionless_base_unit.unit_type for u in self.denominator_units):
+
+            if len(self.numerator_units) > 1:
+                self._name = f"({self._name})"
+
+            denom_name = '*'.join(u.name for u in self.denominator_units)
+            if len(self.denominator_units) > 1:
+                denom_name = f"({denom_name})"
+            self._name += f"/{denom_name}"
+
+        return self._name
 
     def simplify(self) -> Tuple[float, Unit]:
         """Cancel denominator and numerator units, resulting in the simplest

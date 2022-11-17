@@ -4,12 +4,12 @@ import time
 from random import random
 from typing import Union
 
-from pint import UnitRegistry
+# from pint import UnitRegistry
 from pintless import Registry
 
 
 
-def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
+def run_benchmark(r) -> float: #: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
     for _ in range(10_000):
@@ -57,12 +57,12 @@ def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
     return end - start
 
 
-pintful_reg = UnitRegistry()
-time_pint = run_benchmark(pintful_reg)
+# pintful_reg = UnitRegistry()
+# time_pint = run_benchmark(pintful_reg)
 pintless_reg = Registry()
 time_pintless = run_benchmark(pintless_reg)
 
-print(f"    Time (pint): {time_pint:0.4}s")
+# print(f"    Time (pint): {time_pint:0.4}s")
 print(f"Time (pintless): {time_pintless:0.4}s")
-print("")
-print(f"Pintless is {time_pint/time_pintless:0.4} times faster")
+# print("")
+# print(f"Pintless is {time_pint/time_pintless:0.4} times faster")
