@@ -111,6 +111,11 @@ class QuantityTest(unittest.TestCase):
         assert 100 == 100 * r.dimensionless
         assert 100.0 == 100.0 * r.dimensionless
         assert "non-numeric-value" == "non-numeric-value" * r.dimensionless
+        assert 0 == 0 * r.kWh
+        assert 0.0 == 0 * r.Hz
+        self.assertListEqual([0.0, 0, 0, 4 * r.kWh], [0 * r.Hz, 0.0 * r.joule, 0 * r.dimensionless, 4 * r.kWh])
+        self.assertEqual([0, 0.0, 0, 4 * r.kWh], Quantity([0, 0, 0, 4], r.kWh))
+        self.assertNotEqual(Quantity([0, 0, 0, 4], r.kWh), [0, 0, 0, 0])
 
     def test_list_types(self):
         """Quantities support limited operations on lists"""
@@ -118,8 +123,16 @@ class QuantityTest(unittest.TestCase):
         self.assertEqual([1, 2, 3] * self.r.kWh, Quantity([1,2,3], self.r.kWh))
         self.assertEqual([1000, 2000, 3000], ([1, 2, 3] * self.r.kWh).m_as(self.r.watt * self.r.hour))
 
+        # Basic conversions
         list_quantity_cm = [1, 2, 3] * self.r.cm
         list_quantity_inches = [4, 5, 6] * self.r.inch
         with self.assertRaises(AssertionError):
             list_quantity_cm * list_quantity_inches
         self.assertListEqual(list_quantity_cm.to(self.r("inch")).magnitude, [Quantity(x, self.r.cm).to(self.r.inch).magnitude for x in [1, 2, 3]])
+
+        # Ensure arithmetic with non-lists works
+        self.assertEqual(list_quantity_cm * 4, [4, 8, 12] * self.r.cm)
+        self.assertEqual(list_quantity_cm * self.r("4 kW"), [4, 8, 12] * self.r.cm * self.r.kW)
+
+        # Get items
+        self.assertEqual(list_quantity_cm[1], Quantity(2, self.r.cm))

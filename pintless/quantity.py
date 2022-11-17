@@ -110,6 +110,14 @@ class Quantity:
             except TypeError:
                 return False
 
+        if isinstance(__o, list) and isinstance(self.magnitude, list):
+            # FIXME: is there a lazy version of that list comparison?
+            return len(__o) == len(self.magnitude) and all([__o[i] == self[i] for i in range(len(__o))])
+
+        # Special case at 0, since we are a multiplicative system
+        if __o == 0 and self.magnitude == 0:
+            return True
+
         # Else assume the other value is dimensionless
         return Quantity(__o, self.unit.dimensionless_unit) == self
 
