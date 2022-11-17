@@ -82,8 +82,11 @@
 
     "time": {
         "second": 1,
+        "sec": 1,
         "s": 1,
         "minute": 60,
+        "minutes": 60,
+        "min": 60,
         "M": 60,
         "hour": 3600,
         "hours": 3600,
@@ -112,12 +115,15 @@
         "gram": 1,
         "g": 1,
         "pound": 2.20462,
-        "lb": 2.20462
+        "lb": 2.20462,
+        "t": 1000000,
+        "tonne": 1000000
     },
 
     "power": {
         "W": 1,
-        "watt": 1
+        "watt": 1,
+        "watts": 1
     },
 
     "energy": {

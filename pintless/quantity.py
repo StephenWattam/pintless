@@ -36,6 +36,33 @@ class Quantity:
         self.units = self.unit
         self.dimensionality = self.unit.unit_type
 
+    def m_as(self, target_unit: Union[str, unit.Unit]) -> Any:
+        """Return the magnitude of this Quantity as if it is the unit given.
+        Marginally faster than .to('x').magnitude as no new Quantity object is created.
+
+        The unit may be provided as a string ("m/s") or as a Unit type.
+
+        If it is provided as a string, it cannot contain any numbers, e.g. "400 miles".
+        This prevents subtle conversion issues, but is also simpler, thus faster.
+
+        To perform these conversions you must convert the unit then multiply by the constant (i.e. 400)."""
+
+        if isinstance(target_unit, str):
+            if self.unit.registry is None:
+                raise ValueError(
+                    "Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units."
+                )
+            target_unit = self.unit.registry.get_unit(target_unit)
+
+        # This might happen if someone passes in a string containing numbers
+        assert isinstance(target_unit, unit.Unit), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
+
+        conversion_factor = self.unit.conversion_factor(target_unit)
+        if isinstance(self.magnitude, list):
+            return [x * conversion_factor for x in self.magnitude]
+        return self.magnitude * conversion_factor
+
+
     def to(self, target_unit: Union[str, unit.Unit]) -> Quantity:
         """Convert this Quantity to another unit"""
 
@@ -45,6 +72,9 @@ class Quantity:
                     "Cannot process string input for conversion if a registry is not linked to the units.  Set link_to_registry=True when creating units."
                 )
             target_unit = self.unit.registry.get_unit(target_unit)
+
+        # This might happen if someone passes in a string containing numbers
+        assert isinstance(target_unit, unit.Unit), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
 
         conversion_factor = self.unit.conversion_factor(target_unit)
         if isinstance(self.magnitude, list):

@@ -12,6 +12,8 @@ PREFIX_KEY = "__prefixes__"
 DIMENSIONLESS_UNIT_NAME = "dimensionless"
 MULTIPLY_TOKEN = "__multiply__"
 DIVIDE_TOKEN = "__divide__"
+OPEN_EXPR_TOKEN = "__start_expr__"
+CLOSE_EXPR_TOKEN = "__end_expr__"
 
 logging.basicConfig()
 log = logging.getLogger()
@@ -126,9 +128,9 @@ class Registry:
         ), f"A unit with name '{DIMENSIONLESS_UNIT_NAME}' must be defined"
 
         self.dimensionless_unit = Unit([], [], self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
-            self if self.link_to_registry else None,
-            None
-        )
+                                       self if self.link_to_registry else None,
+                                       None
+                                       )
 
         # Define the "multiply method" on this registry
         for unit_name in self.units:
@@ -200,6 +202,7 @@ class Registry:
          - *, to multiply units
          - /, to divide units
          - ' ' (a space), to multiply units
+         - '(' and ')', to define order of operation
 
         Because we are dealing with multiply and divide operations only,
         the need to resolve a full parse tree isn't there: we can simply
@@ -211,6 +214,10 @@ class Registry:
                 return MULTIPLY_TOKEN
             if token == "/":
                 return DIVIDE_TOKEN
+            if token == "(":
+                return OPEN_EXPR_TOKEN
+            if token == ")":
+                return CLOSE_EXPR_TOKEN
             if token in self.units:
                 return self.get_unit(token, support_expressions=False)
             else:
@@ -221,7 +228,7 @@ class Registry:
 
         # Replace * and / with whitespace separated versions, then split on whitespace.
         # Saves use of regex libs
-        unit_expr = unit_expr.replace("*", " * ").replace("/", " / ")
+        unit_expr = unit_expr.replace("*", " * ").replace("/", " / ").replace("(", " ( ").replace(")", " ) ")
         parts = unit_expr.split()
         parts = [type_for_token(s.strip()) for s in parts]
         log.debug("Parsed expression into component parts: %s", parts)
@@ -230,51 +237,71 @@ class Registry:
         if len(parts) == 0:
             return self.get_unit(DIMENSIONLESS_UNIT_NAME)
 
-        assert isinstance(parts[0], (pintless.quantity.Quantity, Unit)), "Expressions must start with a unit name or quantity"
-        assert isinstance(parts[-1], (pintless.quantity.Quantity, Unit)), "Expressions must end with a unit name or quantity"
+        # Implicit multiplication --- insert multiplication tokens between any tokens that don't
+        # currently have them
+        new_parts = []
+        for a, b in zip(parts[:-1], parts[1:]):
+            new_parts.append(a)
 
-        # Because we apply operations left-to-right, we will bundle them into pairs
-        # giving [(operation, unit)]
-        #
-        # Iterate through and, when we have both of these, put them in the list.
-        operations = []
-        current_op = None
-        for i, part in enumerate(parts[1:]):
-            if part == MULTIPLY_TOKEN:
-                if current_op is not None:
-                    raise ValueError(
-                        f"Repeated multiplication token in expression token {i+2}: {part}"
-                    )
-                current_op = MULTIPLY_TOKEN
-            elif part == DIVIDE_TOKEN:
-                if current_op is not None:
-                    raise ValueError(
-                        f"Repeated division token in expression token {i+2}: {part}"
-                    )
-                current_op = DIVIDE_TOKEN
-            elif isinstance(part, (pintless.quantity.Quantity, Unit)):
-                if current_op is not None:
-                    operations.append((current_op, part))
-                    current_op = None
-                else:
-                    # two units following one another is multiplication, not a problem
-                    operations.append((MULTIPLY_TOKEN, part))
+            # already there, get skipped
+            if a == MULTIPLY_TOKEN or b == MULTIPLY_TOKEN or a == DIVIDE_TOKEN or b == DIVIDE_TOKEN or (a == OPEN_EXPR_TOKEN and b == OPEN_EXPR_TOKEN) or (a == CLOSE_EXPR_TOKEN and b == CLOSE_EXPR_TOKEN) or a == OPEN_EXPR_TOKEN or b == CLOSE_EXPR_TOKEN:
+                continue
             else:
-                raise ValueError(
-                    f"Unrecognised token in expression token {i+2}: {part}"
-                )
+                new_parts.append(MULTIPLY_TOKEN)
+        new_parts.append(parts[-1])
 
-        log.debug("Performing operations: %s", operations)
+        parts = new_parts
 
-        # Now apply operations
-        current_value: Unit = parts[0]
-        for operation, operand in operations:
-            assert operation in [MULTIPLY_TOKEN, DIVIDE_TOKEN]
-            assert isinstance(operand, (pintless.quantity.Quantity, Unit))
+        # Shunting yard implementation to order the operations
+        ops = []    # stack
+        output_queue = []
+        # print(f"\nEXPR: {unit_expr}")
+        # print(f"TOKENS: {parts}")
+        parts.reverse()
+        # print(f"TOKENS (reversed): {parts}")
+        while len(parts) > 0:
+            token = parts.pop()
 
-            if operation == MULTIPLY_TOKEN:
-                current_value = current_value * operand
-            elif operation == DIVIDE_TOKEN:
-                current_value = current_value / operand
+            if token in (DIVIDE_TOKEN, MULTIPLY_TOKEN):
+                while len(ops) > 0 and ops[-1] != OPEN_EXPR_TOKEN:
+                    output_queue.append(ops.pop())
+                ops.append(token)
+            elif token == OPEN_EXPR_TOKEN:
+                ops.append(token)
+            elif token == CLOSE_EXPR_TOKEN:
+                assert len(ops) > 0, "Parenthesis mismatch: closed but never opened"
+                while ops[-1] != OPEN_EXPR_TOKEN:
+                    output_queue.append(ops.pop())
+                assert ops[-1] == OPEN_EXPR_TOKEN, "Parenthesis mismatch"
+                ops.pop()   # Discard open paren
+            else:  # either a Quantity or a Unit
+                output_queue.append(token)
 
-        return current_value
+        # Clean up by moving remaining ops onto the output queue
+        while len(ops) > 0:
+            assert ops[-1] != OPEN_EXPR_TOKEN, "Parenthesis mismatch"
+            output_queue.append(ops.pop())
+
+        # print(f"RPN: {output_queue}")
+
+        operands = []
+        for op in output_queue:
+            # print(f"EVAL: {operands}")
+            if op == DIVIDE_TOKEN:
+                assert len(operands) >= 2, f"Expected two operands for divide operation but got {len(operands)}"
+                b = operands.pop()
+                a = operands.pop()
+                operands.append(a / b)
+                # print(f"EVAL: /")
+            elif op == MULTIPLY_TOKEN:
+                assert len(operands) >= 2, f"Expected two operands for divide operation but got {len(operands)}"
+                b = operands.pop()
+                a = operands.pop()
+                operands.append(a * b)
+                # print(f"EVAL: *")
+            else:
+                operands.append(op)
+
+        assert len(operands) == 1, f"Incomplete expression: {unit_expr} --- some tokens remained after evaluation: {operands[1:]}"
+
+        return operands[0]

@@ -111,31 +111,37 @@ class Unit:
             if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
         ]
 
-        if len(numerator_units) == 0:
-            numerator_units = [self.dimensionless_base_unit]
-        if len(denominator_units) == 0:
-            denominator_units = [self.dimensionless_base_unit]
-
         self.numerator_units: List[BaseUnit] = sorted(
             numerator_units, key=lambda u: u.unit_type
         )
         self.denominator_units: List[BaseUnit] = sorted(
             denominator_units, key=lambda u: u.unit_type
         )
-        self.numerator_unit_types = [u.unit_type for u in self.numerator_units]
-        self.denominator_unit_types = [u.unit_type for u in self.numerator_units]
-        self.unit_type = f"{'*'.join([u.unit_type for u in self.numerator_units])}/{'*'.join([u.unit_type for u in self.denominator_units])}"
 
-        # Generate name
+        if len(self.numerator_units) == 0:
+            self.numerator_units = [self.dimensionless_base_unit]
+        if len(self.denominator_units) == 0:
+            self.denominator_units = [self.dimensionless_base_unit]
+
+        self.numerator_unit_types = [u.unit_type for u in self.numerator_units]
+        self.denominator_unit_types = [u.unit_type for u in self.denominator_units]
+        self.unit_type = f"{'*'.join(self.numerator_unit_types)}/{'*'.join(self.denominator_unit_types)}"
+
+        # Generate name if one is not given
         if alias is None:
             self.name = f"{'*'.join([u.name for u in self.numerator_units])}"
+            if len(self.numerator_units) > 1:
+                self.name = f"({self.name})"
             if not all(
                 [
                     u.unit_type == self.dimensionless_base_unit.unit_type
                     for u in self.denominator_units
                 ]
             ):
-                self.name += f"/{'*'.join([u.name for u in self.denominator_units])}"
+                denom_name = '*'.join([u.name for u in self.denominator_units])
+                if len(denominator_units) > 1:
+                    denom_name = f"({denom_name})"
+                self.name += f"/{denom_name}"
         else:
             self.name = alias
 
@@ -186,10 +192,10 @@ class Unit:
         )
 
     def __repr__(self) -> str:
-        return self.__str__()
+        return f"<Unit ({self.name})>"
 
     def __str__(self) -> str:
-        return f"<Unit ({self.name})>"
+        return self.name
 
     def conversion_factor(self, target_unit: Unit) -> float:
         """Calculate the ratio of the size of a value in the target unit relative
@@ -204,10 +210,8 @@ class Unit:
 
         if not isinstance(target_unit, Unit):
             raise TypeError("Cannot compute conversion factor between unit and non-unit values")
-        if self.numerator_unit_types != target_unit.numerator_unit_types:
-            raise TypeError(f"Numerator types for '{str(self)}' ({self.numerator_unit_types}) do not match numerator types for '{str(target_unit)}' ({target_unit.numerator_unit_types})")
-        if self.denominator_unit_types != target_unit.denominator_unit_types:
-            raise TypeError(f"Numerator types for  '{str(self)}' ({self.denominator_unit_types}) do not match denominator types for '{str(target_unit)}' ({target_unit.denominator_unit_types})")
+        if self.unit_type != target_unit.unit_type:
+            raise TypeError(f"Unable to convert from {self} to {target_unit} as they are defined in different dimensions")
 
         # Conversion factor for the numerator
         numerator_conversion_factor = 1
@@ -250,6 +254,12 @@ class Unit:
                 return False
 
         return True
+
+    def compatible_with(self, other: Unit) -> bool:
+        """Returns true if both units have the same dimensionality, e.g. if it is
+        possible to convert a quantity from this unit into the unit in 'other' or not."""
+
+        return self.unit_type == other.unit_type
 
     # Set operations make this expensive, so cache the response
     @lru_cache

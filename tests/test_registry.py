@@ -85,6 +85,26 @@ class RegistryTest(unittest.TestCase):
         assert self.r.get_unit("kW H 4") == (self.r.kWh * 4)
         assert self.r.get_unit("4 * 7") == 4 * 7 * self.r.dimensionless_unit
 
+        assert self.r("GBP / watt hour") == self.r.GBP / self.r.watt * self.r.hour
+        assert self.r("GBP / watt * hour") == self.r.GBP / self.r.watt * self.r.hour
+        assert self.r("(GBP / watt) * hour") == (self.r.GBP / self.r.watt) * self.r.hour
+        assert self.r("(GBP / watt) hour") == (self.r.GBP / self.r.watt) * self.r.hour
+        assert self.r("GBP / (watt * hour)") == self.r.GBP / (self.r.watt * self.r.hour)
+        assert self.r("GBP / (watt hour)") == self.r.GBP / (self.r.watt * self.r.hour)
+        assert self.r("(4) * (7)") == 4 * 7 * self.r.dimensionless_unit
+        assert self.r("(4) * (7 kWh)") == 4 * 7 * self.r.kWh
+
+        with self.assertRaises(AssertionError):
+            self.r("(4 kWh")         # mismatched brackets
+
+    def test_serialisation_to_from_string(self):
+        """Ensure serialisation/deserialisation is reliable"""
+
+        test_strings = ["4 kWh", "kWh", "", "hour / second", "GBP / watt_hour", "kWh / watt_hour"]
+
+        for test_string in test_strings:
+            self.assertEqual(self.r(str(self.r(test_string))), self.r(test_string))
+
     def test_create_types_by_multiplication(self):
 
         r = self.r

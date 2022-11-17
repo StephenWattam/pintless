@@ -29,6 +29,20 @@ class UnitTest(unittest.TestCase):
         assert unit.dimensionless_unit == self.r.get_unit("")
         assert unit.dimensionless_unit == (unit / unit)
 
+
+    def test_dimensionality_check(self):
+        """A relaxed form of equality, this can be used to check that one unit
+        can be converted into another"""
+
+        unit_kwh = self.r.kWh
+        unit_joules = self.r.joule
+        unit_watts = self.r.watt
+        assert unit_kwh.compatible_with(unit_joules)
+        assert unit_kwh.compatible_with(unit_watts) is False
+
+        assert self.r("kg/Mwatt*hour").compatible_with(self.r("g")) is False
+
+
     def test_derived_unit_conversion(self):
 
         l = 1 * self.r.litre

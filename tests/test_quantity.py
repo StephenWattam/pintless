@@ -19,6 +19,13 @@ class QuantityTest(unittest.TestCase):
         # But this should
         assert 4.0 * self.r.kWh / self.r.mile == self.r("4.0 kWh / mile")
 
+    def test_m_as(self):
+        """Test output of magnitudes with dynamic conversion"""
+
+        quantity = 100 * self.r.metre
+        self.assertAlmostEqual(quantity.m_as("km"), 0.1)
+        self.assertAlmostEqual(quantity.m_as("inch"), 3937.0078740157483)
+
     def test_create_types_by_multiplication(self):
 
         r = self.r
@@ -48,6 +55,25 @@ class QuantityTest(unittest.TestCase):
         assert qmetres.magnitude == 10
         cm = qmetres.to(r.cm)
         assert cm.magnitude == 10 * 100
+
+    def test_complex_unit_conversion(self):
+        """Unit conversion with compound units"""
+
+        r = self.r
+
+        # Convert both numerator and denominator at once
+        x = 1 * r("km/hour")
+        y = r.m / r.second
+        self.assertEqual(x.to(y), Quantity(0.2777777777777778, r("meter/second")))
+        self.assertAlmostEqual(x.m_as(y), 0.2777777777777778)
+
+        # Compound units
+        x = 1 * r("kWh")
+        y = r.watt * r.second
+        z = r.joule
+        self.assertEqual(x.to(y), Quantity(3.6e+6, y))
+        self.assertEqual(x.to(z), Quantity(3.6e+6, y))
+        self.assertEqual(x.to(y), Quantity(3.6e+6, z))
 
     def test_mix_quantities_and_units(self):
 
