@@ -76,6 +76,17 @@ class RegistryTest(unittest.TestCase):
         unit = self.r.get_unit("kWh * minute * Hz / dimensionless")
         # assert self.r.get_unit("cm/hour * kWh") == (self.r.get_unit("cm") * self.r.get_unit("watt"))
 
+    def test_string_parser_data_types(self):
+        """Most numbers in expressions will return floats, unless they are all digits"""
+
+        assert isinstance(self.r("-4 kWh").magnitude, int)
+        assert isinstance(self.r("4 kWh").magnitude, int)
+        assert isinstance(self.r("4.0 kWh").magnitude, float)
+
+        # Coerce to float
+        assert isinstance(self.r("4.0 kWh / 3").magnitude, float)
+        assert isinstance(self.r("4.0 * 3").magnitude, float)
+
     def test_create_quantities_from_string(self):
         """Numeric values in expressions will cause the parser to return a Quantity."""
 

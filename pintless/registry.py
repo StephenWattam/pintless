@@ -222,7 +222,11 @@ class Registry:
                 return self.get_unit(token, support_expressions=False)
             else:
                 try:
-                    return pintless.quantity.Quantity(float(token), self.dimensionless_unit)
+                    if token.isdigit() or (len(token) > 1 and token[0] == "-" and token[1:].isdigit()):
+                        magnitude = int(token)
+                    else:
+                        magnitude = float(token)
+                    return pintless.quantity.Quantity(magnitude, self.dimensionless_unit)
                 except ValueError:
                     raise errors.UndefinedUnitError(f"Unit '{token}' not found in registry")
 
