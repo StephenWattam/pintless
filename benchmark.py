@@ -1,15 +1,18 @@
 """A small script to benchmark the unit library against pint."""
 
+import time
+from random import random
+from typing import Union
+
 from pint import UnitRegistry
 from pintless import Registry
-from typing import Union
-import time
+
 
 
 def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
-    for _ in range(100_000):
+    for _ in range(10_000):
 
         # Basic arithmetic
         length_a = 10 * r.meter
@@ -24,7 +27,31 @@ def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
         # Parsing strings
         result = length_a.to("inch")
         result = length_b.to("mile")
-        # result = r.get_unit("mile / hour")
+        result = r.get_unit("mile / hour")
+
+        # Some more arithmetic with just units
+        l = 1 * r.litre
+        vol = 0.001 * r.m * r.m * r.m
+        vol2 = 1 * r.dm * r.dm * r.dm
+
+        r("4 kWh") == (r.kWh * 4)
+        r("4 * kWh") == (r.kWh * 4)
+
+        r("kelvin / watt hour") == r.kelvin / r.watt * r.hour
+        r("kelvin / watt * hour") == r.kelvin / r.watt * r.hour
+        r("(kelvin / watt) * hour") == (r.kelvin / r.watt) * r.hour
+        r("(kelvin / watt) hour") == (r.kelvin / r.watt) * r.hour
+        r("kelvin / (watt * hour)") == r.kelvin / (r.watt * r.hour)
+        r("kelvin / (watt hour)") == r.kelvin / (r.watt * r.hour)
+        r("(4) * (7 kWh)") == 4 * 7 * r.kWh
+
+        a_list = [random() * 300 for x in range(1000)]
+        list_type = r.cm * a_list
+        for _ in range(100):
+            i = int(random() * len(a_list))
+            quantity = list_type[i]
+            string = str(quantity)
+        new_list = list_type.to(r("inch"))
 
     end = time.time()
 

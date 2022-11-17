@@ -45,6 +45,13 @@ class UnitTest(unittest.TestCase):
         assert self.r.kWh / self.r.dimensionless_unit == self.r.kWh
 
 
+    def test_unit_arithmetic(self):
+        """Basic tests of unit arithmetic"""
+
+        self.assertEqual(str(self.r.kWh / self.r.m), "(kwatt*hour)/m")
+        self.assertEqual(str(self.r.kWh / self.r.m * self.r.hour), "(kwatt*hour*hour)/m")
+        self.assertEqual(str(self.r.kWh / self.r.m * self.r.amp), "(amp*kwatt*hour)/m")
+
     def test_unit_names(self):
         """Test conversion to a string"""
 
