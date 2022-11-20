@@ -4,12 +4,12 @@ import time
 from random import random
 from typing import Union
 
-# from pint import UnitRegistry
+from pint import UnitRegistry
 from pintless import Registry
 
 
 
-def run_benchmark(r) -> float: #: Union[UnitRegistry, Registry]) -> float:
+def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
     for _ in range(10_000):
@@ -44,25 +44,26 @@ def run_benchmark(r) -> float: #: Union[UnitRegistry, Registry]) -> float:
         r("kelvin / (watt hour)") == r.kelvin / (r.watt * r.hour)
         r("(4) * (7 kWh)") == 4 * 7 * r.kWh
 
-        a_list = [random() * 300 for x in range(1000)]
-        list_type = r.cm * a_list
-        for _ in range(100):
-            i = int(random() * len(a_list))
-            quantity = list_type[i]
-            string = str(quantity)
-        new_list = list_type.to(r("inch"))
+        # The latest pint objects to this pattern, though earlier versions support it
+        # a_list = [random() * 300 for x in range(1000)]
+        # list_type = r.cm * a_list
+        # for _ in range(100):
+        #     i = int(random() * len(a_list))
+        #     quantity = list_type[i]
+        #     string = str(quantity)
+        # new_list = list_type.to(r("inch"))
 
     end = time.time()
 
     return end - start
 
 
-# pintful_reg = UnitRegistry()
-# time_pint = run_benchmark(pintful_reg)
+pintful_reg = UnitRegistry()
+time_pint = run_benchmark(pintful_reg)
 pintless_reg = Registry()
 time_pintless = run_benchmark(pintless_reg)
 
-# print(f"    Time (pint): {time_pint:0.4}s")
+print(f"    Time (pint): {time_pint:0.4}s")
 print(f"Time (pintless): {time_pintless:0.4}s")
-# print("")
-# print(f"Pintless is {time_pint/time_pintless:0.4} times faster")
+print("")
+print(f"Pintless is {time_pint/time_pintless:0.4} times faster")
