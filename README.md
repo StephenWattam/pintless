@@ -1,6 +1,7 @@
 # Pintless
 <img align="right" width="100" height="100" src="https://raw.githubusercontent.com/StephenWattam/pintless/main/pintless-dalle.jpg" alt="Pintless, the unit library for people who don't want pint"/>
 
+[![DeepSource](https://deepsource.io/gh/StephenWattam/pintless.svg/?label=active+issues&show_trend=true&token=wd9lW1wQHaG9lCc3Jrp-FKVu)](https://deepsource.io/gh/StephenWattam/pintless/?ref=repository-badge)
 [![CodeFactor](https://www.codefactor.io/repository/github/stephenwattam/pintless/badge)](https://www.codefactor.io/repository/github/stephenwattam/pintless)
 ![Linting and building](https://github.com/StephenWattam/pintless/actions/workflows/python-package.yml/badge.svg)
 <!-- Pytest Coverage Comment:Begin -->
