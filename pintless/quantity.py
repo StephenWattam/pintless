@@ -53,9 +53,8 @@ class Quantity:
             target_unit = self.unit.registry.get_unit(target_unit)
 
         # This might happen if someone passes in a string containing numbers
-        assert isinstance(
-            target_unit, plu.Unit
-        ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
+        if not isinstance(target_unit, plu.Unit):
+            raise ValueError("Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)")
 
         conversion_factor = self.unit.conversion_factor(target_unit)
         if isinstance(self.magnitude, list):
@@ -73,9 +72,8 @@ class Quantity:
             target_unit = self.unit.registry.get_unit(target_unit)
 
         # This might happen if someone passes in a string containing numbers
-        assert isinstance(
-            target_unit, plu.Unit
-        ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
+        if not isinstance(target_unit, plu.Unit):
+            raise ValueError("Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)")
 
         conversion_factor = self.unit.conversion_factor(target_unit)
         if isinstance(self.magnitude, list):
@@ -209,7 +207,8 @@ class Quantity:
         )
 
         if isinstance(self.magnitude, list):
-            assert not isinstance(__o.magnitude, list), "Cannot multiply two list types"
+            if isinstance(__o.magnitude, list):
+                raise ValueError("Cannot multiply two list types")
             new_magnitude = [
                 x * __o.magnitude * conversion_factor for x in self.magnitude
             ]

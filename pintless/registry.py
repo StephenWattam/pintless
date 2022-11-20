@@ -69,9 +69,8 @@ class Registry:
 
                 # handle compound types
                 if isinstance(multiplier, dict):
-                    assert (
-                        "numerator" in multiplier or "denominator" in multiplier
-                    ), f"Missing numerator and/or denominator list for derived type '{unit_name}'"
+                    if not ("numerator" in multiplier or "denominator" in multiplier):
+                        raise ValueError(f"Missing numerator and/or denominator list for derived type '{unit_name}'")
 
                     numerator_list = (
                         multiplier["numerator"]
@@ -119,13 +118,11 @@ class Registry:
                     self.units.add(prefix + unit_name)
 
             # Check we have a base unit for the unit type
-            assert (
-                utype in self.base_type_for_utype
-            ), f"No base unit defined for unit type {utype}"
+            if utype not in self.base_type_for_utype:
+                raise ValueError(f"No base unit defined for unit type {utype}")
 
-        assert (
-            DIMENSIONLESS_UNIT_NAME in self.units
-        ), f"A unit with name '{DIMENSIONLESS_UNIT_NAME}' must be defined"
+        if DIMENSIONLESS_UNIT_NAME not in self.units:
+            raise AssertionError(f"A unit with name '{DIMENSIONLESS_UNIT_NAME}' must be defined")
 
         self.dimensionless_unit = Unit(
             [],
@@ -140,8 +137,10 @@ class Registry:
             setattr(self, unit_name, self.get_unit(unit_name))
 
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        assert len(args) == 1
-        assert len(kwds) == 0
+        if len(args) != 1:
+            raise AssertionError()
+        if len(kwds) != 0:
+            raise AssertionError()
 
         return self.get_unit(args[0])
 
@@ -292,40 +291,40 @@ class Registry:
             elif token == OPEN_EXPR_TOKEN:
                 ops.append(token)
             elif token == CLOSE_EXPR_TOKEN:
-                assert len(ops) > 0, "Parenthesis mismatch: closed but never opened"
+                if len(ops) == 0:
+                    raise ValueError("Parenthesis mismatch: closed but never opened")
                 while ops[-1] != OPEN_EXPR_TOKEN:
                     output_queue.append(ops.pop())
-                assert ops[-1] == OPEN_EXPR_TOKEN, "Parenthesis mismatch"
+                if ops[-1] != OPEN_EXPR_TOKEN:
+                    raise ValueError("Parenthesis mismatch")
                 ops.pop()  # Discard open paren
             else:  # either a Quantity or a Unit
                 output_queue.append(token)
 
         # Clean up by moving remaining ops onto the output queue
         while len(ops) > 0:
-            assert ops[-1] != OPEN_EXPR_TOKEN, "Parenthesis mismatch"
+            if ops[-1] == OPEN_EXPR_TOKEN:
+                raise ValueError("Parenthesis mismatch: found open expression token on the operator stack")
             output_queue.append(ops.pop())
 
         operands = []
         for op in output_queue:
             if op == DIVIDE_TOKEN:
-                assert (
-                    len(operands) >= 2
-                ), f"Expected two operands for divide operation but got {len(operands)}"
+                if len(operands) < 2:
+                    raise ValueError(f"Expected two operands for divide operation but got {len(operands)}")
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a / b)
             elif op == MULTIPLY_TOKEN:
-                assert (
-                    len(operands) >= 2
-                ), f"Expected two operands for divide operation but got {len(operands)}"
+                if len(operands) < 2:
+                    raise ValueError(f"Expected two operands for divide operation but got {len(operands)}")
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a * b)
             else:
                 operands.append(op)
 
-        assert (
-            len(operands) == 1
-        ), f"Incomplete expression: {unit_expr} --- some tokens remained after evaluation: {operands[1:]}"
+        if len(operands) != 1:
+            raise ValueError(f"Incomplete expression: {unit_expr} --- some tokens remained after evaluation: {operands[1:]}")
 
         return operands[0]

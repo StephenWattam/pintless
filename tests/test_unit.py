@@ -81,7 +81,6 @@ class UnitTest(unittest.TestCase):
         vol2 = 1 * self.r.dm * self.r.dm * self.r.dm
         self.assertAlmostEqual(vol.to("litre").magnitude, l.magnitude)
         self.assertAlmostEqual(vol2.to("litre").magnitude, l.magnitude)
-        # import code; code.interact(local=locals())
 
     def test_power_operator(self):
 

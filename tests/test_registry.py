@@ -102,7 +102,7 @@ class RegistryTest(unittest.TestCase):
         assert self.r("(4) * (7)") == 4 * 7 * self.r.dimensionless_unit
         assert self.r("(4) * (7 kWh)") == 4 * 7 * self.r.kWh
 
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.r("(4 kWh")  # mismatched brackets
 
     def test_serialisation_to_from_string(self):

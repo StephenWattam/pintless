@@ -128,7 +128,7 @@ class QuantityTest(unittest.TestCase):
         # Basic conversions
         list_quantity_cm = [1, 2, 3] * self.r.cm
         list_quantity_inches = [4, 5, 6] * self.r.inch
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             list_quantity_cm * list_quantity_inches
         self.assertListEqual(
             list_quantity_cm.to(self.r("inch")).magnitude,

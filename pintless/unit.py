@@ -340,7 +340,8 @@ class Unit:
     def __truediv__(self, __o: Unit) -> Unit:
         """Divide these units by other units"""
 
-        assert isinstance(__o, Unit), "Cannot divide unit by non-unit"
+        if not isinstance(__o, Unit):
+            raise ValueError("Cannot divide unit by non-unit")
 
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
