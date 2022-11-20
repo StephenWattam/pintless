@@ -30,6 +30,7 @@ class BaseUnit:
         self.multiplier = multiplier
 
     def conversion_factor(self, target_unit: BaseUnit) -> float:
+        """Return k such that a value in this unit * k = a value in target_unit."""
 
         if self.unit_type != target_unit.unit_type:
             raise TypeError(
@@ -175,7 +176,8 @@ class Unit:
         the method returns two items: a conversion factor that operates in the same way
         as .conversion_factor(), and the resulting Unit instance itself."""
 
-        def first_index(lst, unit_type: str):
+        def first_index(lst: List[BaseUnit], unit_type: str) -> Optional[int]:
+            """Return the index of the first item out of lst that is of the unit type unit_type"""
             for i, u in enumerate(lst):
                 if u.unit_type == unit_type:
                     return i

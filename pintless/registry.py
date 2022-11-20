@@ -56,7 +56,7 @@ class Registry:
         for utype, units in defs.items():
 
             # Create a forward index for the unit type
-            utype = f"[{utype}]"  # XXX: pint types have brackets.
+            utype = f"[{utype}]"  # for compatibility, pint dimensions have brackets.
             self.units_for_utype[utype] = {}
 
             # For every unit, for every prefix, calculate a multiplier down to the 'base unit'
@@ -217,7 +217,8 @@ class Registry:
         walk through the operations left-to-right.
         """
 
-        def type_for_token(token: str):
+        def type_for_token(token: str) -> Union[Unit, pintless.quantity.Quantity, str]:
+            """Tokenise the string, returning a token."""
             if token in ("*", ""):
                 return MULTIPLY_TOKEN
             if token == "/":
