@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import Union, Any
 import math
 
-from collections.abc import Iterable
 import pintless.unit as unit
 
 
