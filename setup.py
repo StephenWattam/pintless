@@ -15,7 +15,8 @@ setup(name='pintless',
         'dev': ['flake8'],
         'test': [
             'pytest',
-            'pytest-cov'
+            'pytest-cov',
+            'flake8'
         ]
     }
      )
