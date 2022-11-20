@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Union, Any
 import math
 
-import pintless.unit as unit
+import pintless.unit as plu
 
 
 class Quantity:
@@ -15,7 +15,7 @@ class Quantity:
     Quantity objects can have their values extracted using .magnitude(), and can be converted
     to new units using .to() or .ito().  This follows the API established by the pint library."""
 
-    def __init__(self, magnitude: Any, unit: unit.Unit) -> None:
+    def __init__(self, magnitude: Any, unit: plu.Unit) -> None:
 
         if isinstance(unit, str):
             raise TypeError(
@@ -23,10 +23,10 @@ class Quantity:
             )
 
         self.magnitude = magnitude
-        self.unit = unit
+        self.unit: plu.Unit = unit
 
     @property
-    def units(self) -> unit.Unit:
+    def units(self) -> plu.Unit:
         """Pint compatibliity property, simply returns self.unit"""
         return self.unit
 
@@ -34,7 +34,7 @@ class Quantity:
     def dimensionality(self) -> str:
         return self.unit.unit_type
 
-    def m_as(self, target_unit: Union[str, unit.Unit]) -> Any:
+    def m_as(self, target_unit: Union[str, plu.Unit]) -> Any:
         """Return the magnitude of this Quantity as if it is the unit given.
         Marginally faster than .to('x').magnitude as no new Quantity object is created.
 
@@ -54,7 +54,7 @@ class Quantity:
 
         # This might happen if someone passes in a string containing numbers
         assert isinstance(
-            target_unit, unit.Unit
+            target_unit, plu.Unit
         ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
 
         conversion_factor = self.unit.conversion_factor(target_unit)
@@ -62,7 +62,7 @@ class Quantity:
             return [x * conversion_factor for x in self.magnitude]
         return self.magnitude * conversion_factor
 
-    def to(self, target_unit: Union[str, unit.Unit]) -> Quantity:
+    def to(self, target_unit: Union[str, plu.Unit]) -> Quantity:
         """Convert this Quantity to another unit"""
 
         if isinstance(target_unit, str):
@@ -74,7 +74,7 @@ class Quantity:
 
         # This might happen if someone passes in a string containing numbers
         assert isinstance(
-            target_unit, unit.Unit
+            target_unit, plu.Unit
         ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
 
         conversion_factor = self.unit.conversion_factor(target_unit)
@@ -85,7 +85,7 @@ class Quantity:
 
         return Quantity(new_magnitude, target_unit)
 
-    def ito(self, target_unit: Union[str, unit.Unit]) -> None:
+    def ito(self, target_unit: Union[str, plu.Unit]) -> None:
         """In-place version of to"""
 
         if isinstance(target_unit, str):
@@ -188,7 +188,7 @@ class Quantity:
         """Multiply the Quantity.  Outputs something with compound units"""
 
         # Someone is 'adding' units to this quantity
-        if isinstance(__o, unit.Unit):
+        if isinstance(__o, plu.Unit):
             return Quantity(self.magnitude, self.unit * __o)
 
         if not isinstance(__o, Quantity):
@@ -201,7 +201,7 @@ class Quantity:
             self.unit.numerator_units + __o.unit.numerator_units,
             self.unit.denominator_units + __o.unit.denominator_units,
         )
-        new_unit = unit.Unit(
+        new_unit = plu.Unit(
             new_numerators,
             new_denominators,
             self.unit.dimensionless_base_unit,
@@ -224,7 +224,7 @@ class Quantity:
         """'true' division, where 2/3 is 0.66 rather than 0"""
 
         if not isinstance(__o, Quantity):
-            if isinstance(__o, unit.Unit):
+            if isinstance(__o, plu.Unit):
                 __o = Quantity(1, __o)
             else:
                 # Assume it's a magnitude.  Maybe warn on this condition?
@@ -236,7 +236,7 @@ class Quantity:
             self.unit.numerator_units + __o.unit.denominator_units,
             self.unit.denominator_units + __o.unit.numerator_units,
         )
-        new_unit = unit.Unit(
+        new_unit = plu.Unit(
             new_numerators,
             new_denominators,
             self.unit.dimensionless_base_unit,
@@ -254,7 +254,7 @@ class Quantity:
 
     def __iter__(self):
         class QuantityIterator:
-            def __init__(self, unit: unit.Unit, iterator):
+            def __init__(self, unit: plu.Unit, iterator):
                 self.unit = unit
                 self.iterator = iterator
 
