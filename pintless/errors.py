@@ -1,3 +1,2 @@
-
 class UndefinedUnitError(Exception):
     pass

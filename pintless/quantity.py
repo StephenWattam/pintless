@@ -19,7 +19,9 @@ class Quantity:
     def __init__(self, magnitude: Any, unit: unit.Unit) -> None:
 
         if isinstance(unit, str):
-            raise TypeError("Cannot instantiate a Quantity object using a string expression as a unit: use the unit registry to do this instead.")
+            raise TypeError(
+                "Cannot instantiate a Quantity object using a string expression as a unit: use the unit registry to do this instead."
+            )
 
         self.magnitude = magnitude
         self._set_unit(unit)
@@ -55,13 +57,14 @@ class Quantity:
             target_unit = self.unit.registry.get_unit(target_unit)
 
         # This might happen if someone passes in a string containing numbers
-        assert isinstance(target_unit, unit.Unit), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
+        assert isinstance(
+            target_unit, unit.Unit
+        ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
 
         conversion_factor = self.unit.conversion_factor(target_unit)
         if isinstance(self.magnitude, list):
             return [x * conversion_factor for x in self.magnitude]
         return self.magnitude * conversion_factor
-
 
     def to(self, target_unit: Union[str, unit.Unit]) -> Quantity:
         """Convert this Quantity to another unit"""
@@ -74,7 +77,9 @@ class Quantity:
             target_unit = self.unit.registry.get_unit(target_unit)
 
         # This might happen if someone passes in a string containing numbers
-        assert isinstance(target_unit, unit.Unit), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
+        assert isinstance(
+            target_unit, unit.Unit
+        ), "Cannot convert to a non-unit type (this may happen if converting to a string expression with numbers in it)"
 
         conversion_factor = self.unit.conversion_factor(target_unit)
         if isinstance(self.magnitude, list):
@@ -106,12 +111,16 @@ class Quantity:
     def __eq__(self, __o: object) -> bool:
         if isinstance(__o, Quantity):
             try:
-                return (self.magnitude == __o.magnitude and self.unit == __o.unit) or self.to(__o.unit).magnitude == __o.magnitude
+                return (
+                    self.magnitude == __o.magnitude and self.unit == __o.unit
+                ) or self.to(__o.unit).magnitude == __o.magnitude
             except TypeError:
                 return False
 
         if isinstance(__o, list) and isinstance(self.magnitude, list):
-            return len(__o) == len(self.magnitude) and all(__o[i] == self[i] for i in range(len(__o)))
+            return len(__o) == len(self.magnitude) and all(
+                __o[i] == self[i] for i in range(len(__o))
+            )
 
         # Special case at 0, since we are a multiplicative system
         if __o == 0 and self.magnitude == 0:
@@ -194,7 +203,9 @@ class Quantity:
         conversion_factor, simplified_new_unit = (self.unit * __o.unit).simplify()
         if isinstance(self.magnitude, list):
             assert not isinstance(__o.magnitude, list), "Cannot multiply two list types"
-            new_magnitude = [x * __o.magnitude * conversion_factor for x in self.magnitude]
+            new_magnitude = [
+                x * __o.magnitude * conversion_factor for x in self.magnitude
+            ]
         else:
             new_magnitude = self.magnitude * __o.magnitude * conversion_factor
 
@@ -227,16 +238,16 @@ class Quantity:
         # print(f"=> {conversion_factor}, {new_unit}: {self.magnitude}/{__o.magnitude}")
 
         if isinstance(self.magnitude, list):
-            new_magnitude = [(x / __o.magnitude) * conversion_factor for x in self.magnitude]
+            new_magnitude = [
+                (x / __o.magnitude) * conversion_factor for x in self.magnitude
+            ]
         else:
             new_magnitude = (self.magnitude / __o.magnitude) * conversion_factor
 
         return Quantity(new_magnitude, new_unit)
 
     def __iter__(self):
-
         class QuantityIterator:
-
             def __init__(self, unit: unit.Unit, iterator):
                 self.unit = unit
                 self.iterator = iterator
@@ -261,7 +272,6 @@ class Quantity:
                 return self.magnitude > 0
             raise TypeError(f"Cannot compare Quantity and '{type(__o)}'")
         return self.magnitude > __o.to(self.unit).magnitude
-
 
     # # TODO
     # object.__truediv__(self, other)

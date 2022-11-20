@@ -8,8 +8,7 @@ from typing import Union
 from pintless import Registry
 
 
-
-def run_benchmark(r) -> float: #: Union[UnitRegistry, Registry]) -> float:
+def run_benchmark(r) -> float:  #: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
     for _ in range(10_000):

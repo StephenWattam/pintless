@@ -127,10 +127,13 @@ class Registry:
             DIMENSIONLESS_UNIT_NAME in self.units
         ), f"A unit with name '{DIMENSIONLESS_UNIT_NAME}' must be defined"
 
-        self.dimensionless_unit = Unit([], [], self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
-                                       self if self.link_to_registry else None,
-                                       None
-                                       )
+        self.dimensionless_unit = Unit(
+            [],
+            [],
+            self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
+            self if self.link_to_registry else None,
+            None,
+        )
 
         # Define the "multiply method" on this registry
         for unit_name in self.units:
@@ -143,7 +146,9 @@ class Registry:
         return self.get_unit(args[0])
 
     @lru_cache
-    def get_unit(self, unit_name: str, support_expressions: bool = True) -> Union[Unit, pintless.quantity.Quantity]:
+    def get_unit(
+        self, unit_name: str, support_expressions: bool = True
+    ) -> Union[Unit, pintless.quantity.Quantity]:
         """Return a Unit for a given type.  The unit will not have a value attached
         as it would in a Quantity object.
 
@@ -163,7 +168,9 @@ class Registry:
             if support_expressions:
                 return self._parse_unit_expression(unit_name)
             else:
-                raise errors.UndefinedUnitError(f"Unit '{unit_name}' not round in registry")
+                raise errors.UndefinedUnitError(
+                    f"Unit '{unit_name}' not round in registry"
+                )
 
         # Load either a derived type or a basic type
         if unit_name in self.derived_types:
@@ -178,7 +185,7 @@ class Registry:
             self._get_base_unit(DIMENSIONLESS_UNIT_NAME),
             self if self.link_to_registry else None,
             self.dimensionless_unit,
-            unit_name
+            unit_name,
         )
 
     @lru_cache
@@ -186,7 +193,9 @@ class Registry:
         """Return a simple base unit type.  Used to construct units."""
 
         if base_unit_name in self.derived_types:
-            raise ValueError(f"Cannot instantiate base unit '{base_unit_name}', as it is a derived type")
+            raise ValueError(
+                f"Cannot instantiate base unit '{base_unit_name}', as it is a derived type"
+            )
 
         # Base case, the unit itself
         unit_type = self.utype_for_unit[base_unit_name]
@@ -195,7 +204,9 @@ class Registry:
 
         return BaseUnit(base_unit_name, unit_type, base_type, multiplier)
 
-    def _parse_unit_expression(self, unit_expr: str) -> Union[Unit, pintless.quantity.Quantity]:
+    def _parse_unit_expression(
+        self, unit_expr: str
+    ) -> Union[Unit, pintless.quantity.Quantity]:
         """Parse an expression containing the following tokens:
 
          - unit name (any string without spaces)
@@ -222,17 +233,28 @@ class Registry:
                 return self.get_unit(token, support_expressions=False)
             else:
                 try:
-                    if token.isdigit() or (len(token) > 1 and token[0] == "-" and token[1:].isdigit()):
+                    if token.isdigit() or (
+                        len(token) > 1 and token[0] == "-" and token[1:].isdigit()
+                    ):
                         magnitude = int(token)
                     else:
                         magnitude = float(token)
-                    return pintless.quantity.Quantity(magnitude, self.dimensionless_unit)
+                    return pintless.quantity.Quantity(
+                        magnitude, self.dimensionless_unit
+                    )
                 except ValueError:
-                    raise errors.UndefinedUnitError(f"Unit '{token}' not found in registry")
+                    raise errors.UndefinedUnitError(
+                        f"Unit '{token}' not found in registry"
+                    )
 
         # Replace * and / with whitespace separated versions, then split on whitespace.
         # Saves use of regex libs
-        unit_expr = unit_expr.replace("*", " * ").replace("/", " / ").replace("(", " ( ").replace(")", " ) ")
+        unit_expr = (
+            unit_expr.replace("*", " * ")
+            .replace("/", " / ")
+            .replace("(", " ( ")
+            .replace(")", " ) ")
+        )
         parts = unit_expr.split()
         parts = [type_for_token(s.strip()) for s in parts]
         log.debug("Parsed expression into component parts: %s", parts)
@@ -248,7 +270,16 @@ class Registry:
             new_parts.append(a)
 
             # already there, get skipped
-            if a == MULTIPLY_TOKEN or b == MULTIPLY_TOKEN or a == DIVIDE_TOKEN or b == DIVIDE_TOKEN or (a == OPEN_EXPR_TOKEN and b == OPEN_EXPR_TOKEN) or (a == CLOSE_EXPR_TOKEN and b == CLOSE_EXPR_TOKEN) or a == OPEN_EXPR_TOKEN or b == CLOSE_EXPR_TOKEN:
+            if (
+                a == MULTIPLY_TOKEN
+                or b == MULTIPLY_TOKEN
+                or a == DIVIDE_TOKEN
+                or b == DIVIDE_TOKEN
+                or (a == OPEN_EXPR_TOKEN and b == OPEN_EXPR_TOKEN)
+                or (a == CLOSE_EXPR_TOKEN and b == CLOSE_EXPR_TOKEN)
+                or a == OPEN_EXPR_TOKEN
+                or b == CLOSE_EXPR_TOKEN
+            ):
                 continue
             else:
                 new_parts.append(MULTIPLY_TOKEN)
@@ -257,7 +288,7 @@ class Registry:
         parts = new_parts
 
         # Shunting yard implementation to order the operations
-        ops = []    # stack
+        ops = []  # stack
         output_queue = []
         # print(f"\nEXPR: {unit_expr}")
         # print(f"TOKENS: {parts}")
@@ -277,7 +308,7 @@ class Registry:
                 while ops[-1] != OPEN_EXPR_TOKEN:
                     output_queue.append(ops.pop())
                 assert ops[-1] == OPEN_EXPR_TOKEN, "Parenthesis mismatch"
-                ops.pop()   # Discard open paren
+                ops.pop()  # Discard open paren
             else:  # either a Quantity or a Unit
                 output_queue.append(token)
 
@@ -292,13 +323,17 @@ class Registry:
         for op in output_queue:
             # print(f"EVAL: {operands}")
             if op == DIVIDE_TOKEN:
-                assert len(operands) >= 2, f"Expected two operands for divide operation but got {len(operands)}"
+                assert (
+                    len(operands) >= 2
+                ), f"Expected two operands for divide operation but got {len(operands)}"
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a / b)
                 # print(f"EVAL: /")
             elif op == MULTIPLY_TOKEN:
-                assert len(operands) >= 2, f"Expected two operands for divide operation but got {len(operands)}"
+                assert (
+                    len(operands) >= 2
+                ), f"Expected two operands for divide operation but got {len(operands)}"
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a * b)
@@ -306,6 +341,8 @@ class Registry:
             else:
                 operands.append(op)
 
-        assert len(operands) == 1, f"Incomplete expression: {unit_expr} --- some tokens remained after evaluation: {operands[1:]}"
+        assert (
+            len(operands) == 1
+        ), f"Incomplete expression: {unit_expr} --- some tokens remained after evaluation: {operands[1:]}"
 
         return operands[0]
