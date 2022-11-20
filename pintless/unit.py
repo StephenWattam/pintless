@@ -10,7 +10,8 @@ Numeric = Union[int, float]
 
 
 class BaseUnit:
-    """A simple unit type that contains:
+    """
+    A simple unit type that contains:
 
     - A unit (e.g. millimeter), and a dimension (e.g. length).
     - A base unit (e.g. meter) and a multiplier to convert from this unit into that base unit.
@@ -61,7 +62,8 @@ class BaseUnit:
 
 
 class Unit:
-    """The main representation of a unit within Pintless.
+    """
+    The main representation of a unit within Pintless.
 
     Multiplying an object by a instance of this class will produce a Quantity,
     assigning the unit to the value therein so that arithmetic can be performed
@@ -139,7 +141,8 @@ class Unit:
 
     @property
     def name(self) -> str:
-        """Return the name of this unit.
+        """
+        Return the name of this unit.
 
         Generating this on instantiation costs performance, so this is computed on first call
         and cached."""
@@ -168,7 +171,8 @@ class Unit:
     def simplify(
         self, numerator_units: List[BaseUnit], denominator_units: List[BaseUnit]
     ) -> Tuple[List[BaseUnit], List[BaseUnit], float]:
-        """Cancel denominator and numerator units, resulting in the simplest
+        """
+        Cancel denominator and numerator units, resulting in the simplest
         possible representation of the unit.  This is executed after multiplication
         or division to ensure that the resulting unit is sane and useful.
 
@@ -238,13 +242,15 @@ class Unit:
         return self.name
 
     def conversion_factor(self, target_unit: Unit) -> float:
-        """Calculate the ratio of the size of a value in the target unit relative
+        """
+        Calculate the ratio of the size of a value in the target unit relative
         to this unit.
 
         If you have a value in the current unit and wish to know how much larger it should
         be in the target unit, call this method and multiply the value by the result.
 
-        This method is used by Quantity() to update values."""
+        This method is used by Quantity() to update values.
+        """
 
         if not isinstance(target_unit, Unit):
             raise TypeError(
@@ -292,8 +298,10 @@ class Unit:
         return True
 
     def compatible_with(self, other: Unit) -> bool:
-        """Returns true if both units have the same dimensionality, e.g. if it is
-        possible to convert a quantity from this unit into the unit in 'other' or not."""
+        """
+        Returns true if both units have the same dimensionality, e.g. if it is
+        possible to convert a quantity from this unit into the unit in 'other' or not.
+        """
 
         return self.unit_type == other.unit_type
 

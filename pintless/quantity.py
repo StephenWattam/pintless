@@ -6,14 +6,16 @@ import pintless.unit as plu
 
 
 class Quantity:
-    """Represents a value paired with a unit.  The value can be any python object, but is
+    """
+    Represents a value paired with a unit.  The value can be any python object, but is
     expected to be a numeric type (typically float, int, complex) that responds to the
     usual __add__, __mul__, etc.
 
     Quantity objects can be constructed by multiplying a python object by a Unit object.
 
     Quantity objects can have their values extracted using .magnitude(), and can be converted
-    to new units using .to() or .ito().  This follows the API established by the pint library."""
+    to new units using .to() or .ito().  This follows the API established by the pint library.
+    """
 
     def __init__(self, magnitude: Any, unit: plu.Unit) -> None:
 
@@ -35,7 +37,8 @@ class Quantity:
         return self.unit.unit_type
 
     def m_as(self, target_unit: Union[str, plu.Unit]) -> Any:
-        """Return the magnitude of this Quantity as if it is the unit given.
+        """
+        Return the magnitude of this Quantity as if it is the unit given.
         Marginally faster than .to('x').magnitude as no new Quantity object is created.
 
         The unit may be provided as a string ("m/s") or as a Unit type.
@@ -43,7 +46,8 @@ class Quantity:
         If it is provided as a string, it cannot contain any numbers, e.g. "400 miles".
         This prevents subtle conversion issues, but is also simpler, thus faster.
 
-        To perform these conversions you must convert the unit then multiply by the constant (i.e. 400)."""
+        To perform these conversions you must convert the unit then multiply by the constant (i.e. 400).
+        """
 
         if isinstance(target_unit, str):
             if self.unit.registry is None:
@@ -253,6 +257,12 @@ class Quantity:
 
     def __iter__(self):
         class QuantityIterator:
+            """
+            An iterator that iterates over the magnitude, returning its values with the correct unit.
+
+            This class is returned if iterating over a Quantity with a list-type magnitude
+            """
+
             def __init__(self, unit: plu.Unit, iterator):
                 self.unit = unit
                 self.iterator = iterator

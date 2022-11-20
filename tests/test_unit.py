@@ -8,10 +8,12 @@ class BaseUnitTest(unittest.TestCase):
         self.r = Registry()
 
     def test_base_unit_equality(self):
-        """Base units are the same if they are the same multiplier on top of
+        """
+        Base units are the same if they are the same multiplier on top of
         the same base unit.
 
-        This implies they have the same dimensionality"""
+        This implies they have the same dimensionality
+        """
 
         base_kw = self.r.kW.numerator_units[0]
         base_kw2 = self.r.kilowatt.numerator_units[0]
@@ -63,8 +65,10 @@ class UnitTest(unittest.TestCase):
         assert str(self.r.kW * self.r.hour / self.r.GBP) == "(kW*hour)/GBP"
 
     def test_dimensionality_check(self):
-        """A relaxed form of equality, this can be used to check that one unit
-        can be converted into another"""
+        """
+        A relaxed form of equality, this can be used to check that one unit
+        can be converted into another
+        """
 
         unit_kwh = self.r.kWh
         unit_joules = self.r.joule

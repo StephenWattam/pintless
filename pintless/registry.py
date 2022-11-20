@@ -20,6 +20,8 @@ log = logging.getLogger()
 
 
 class Registry:
+    """A factory class for units and quantities.  Broadly speaking, units and quantities created from
+    the same Registry object are compatible and can be converted if the dimensionality is the same."""
 
     Quantity = pintless.quantity.Quantity
 

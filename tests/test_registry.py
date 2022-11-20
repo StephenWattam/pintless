@@ -17,7 +17,8 @@ class RegistryTest(unittest.TestCase):
         """Test basic (forward) aliasing: compound units have a simple name
         assigned by the registry, and will serialise to this name.
 
-        This alias shouldn't affect any of the other comparisons"""
+        This alias shouldn't affect any of the other comparisons
+        """
 
         kwh = self.r.kWh
         assert kwh.name == "kWh"
