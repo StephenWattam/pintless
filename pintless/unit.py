@@ -99,24 +99,8 @@ class Unit:
             # Else create a new one.
             self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit, self.registry)
 
-        # Remove dimensionless units.
-        numerator_units = [
-            u
-            for u in numerator_units
-            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
-        ]
-        denominator_units = [
-            u
-            for u in denominator_units
-            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
-        ]
-
-        self.numerator_units: List[BaseUnit] = sorted(
-            numerator_units, key=lambda u: u.unit_type
-        )
-        self.denominator_units: List[BaseUnit] = sorted(
-            denominator_units, key=lambda u: u.unit_type
-        )
+        self.numerator_units = numerator_units
+        self.denominator_units = denominator_units
 
         if len(self.numerator_units) == 0:
             self.numerator_units = [self.dimensionless_base_unit]
@@ -179,7 +163,70 @@ class Unit:
 
         return self._name
 
-    def simplify(self) -> Tuple[float, Unit]:
+    def simplify(self, numerator_units: List[BaseUnit], denominator_units: List[BaseUnit]) -> Tuple[List[BaseUnit], List[BaseUnit], float]:
+        """Cancel denominator and numerator units, resulting in the simplest
+        possible representation of the unit.  This is executed after multiplication
+        or division to ensure that the resulting unit is sane and useful.
+
+        Simplifying types may change units, resulting in a value change.  Because of this
+        the method returns two items: a conversion factor that operates in the same way
+        as .conversion_factor(), and the resulting Unit instance itself."""
+
+        def first_index(lst, unit_type: str):
+            for i, u in enumerate(lst):
+                if u.unit_type == unit_type:
+                    return i
+            return None
+
+        # Remove dimensionless units.
+        numerator_units = [
+            u
+            for u in numerator_units
+            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
+        ]
+        denominator_units = [
+            u
+            for u in denominator_units
+            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
+        ]
+
+        numerator_units = sorted(
+            numerator_units, key=lambda u: u.unit_type
+        )
+        denominator_units = sorted(
+            denominator_units, key=lambda u: u.unit_type
+        )
+
+        # Find list of unit types in numerator, and list in denominator, then cancel them.
+        # Sort by unit type so we know we can match up
+        new_numerator: List[BaseUnit] = [
+            u
+            for u in numerator_units
+            if u.unit_type != self.dimensionless_base_unit.unit_type
+        ]
+        new_denominator = []
+
+        conversion_factor = 1
+        for denom_unit in denominator_units:
+            # Find a unit with the correct type in the numerator and cancel it.
+            index_to_cancel = first_index(new_numerator, denom_unit.unit_type)
+            if index_to_cancel is not None:
+                conversion_factor *= new_numerator[index_to_cancel].conversion_factor(
+                    denom_unit, self.dimensionless_base_unit
+                )
+                del new_numerator[index_to_cancel]
+            else:
+                new_denominator.append(denom_unit)
+
+        # Special case where we have x/x remaining
+        if len(new_numerator) == len(new_denominator) and all(
+            [a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)]
+        ):
+            return [], [], conversion_factor
+
+        return new_numerator, new_denominator, conversion_factor
+
+    def _old_simplify(self) -> Tuple[float, Unit]:
         """Cancel denominator and numerator units, resulting in the simplest
         possible representation of the unit.  This is executed after multiplication
         or division to ensure that the resulting unit is sane and useful.
@@ -309,13 +356,10 @@ class Unit:
             # Multiply a/b by b/c to get ab * bc.
             # This means concatenating the lists, but ensuring there's only ever one 'dimensionless'
 
-            new_numerators = self.numerator_units + __o.numerator_units
-            new_denominators = self.denominator_units + __o.denominator_units
+            new_numerators, new_denominators, _ = self.simplify(self.numerator_units + __o.numerator_units,
+                                                                self.denominator_units + __o.denominator_units)
 
-            new_unit = Unit(
-                new_numerators, new_denominators, self.dimensionless_base_unit, self.registry
-            )
-            return new_unit.simplify()[1]
+            return Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)
 
         if isinstance(__o, Quantity):
             return __o * self
@@ -339,8 +383,7 @@ class Unit:
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
 
-        new_numerators = self.numerator_units + __o.denominator_units
-        new_denominators = self.denominator_units + __o.numerator_units
+        new_numerators, new_denominators, _ = self.simplify(self.numerator_units + __o.denominator_units,
+                                                            self.denominator_units + __o.numerator_units)
 
-        new_unit = Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)
-        return new_unit.simplify()[1]
+        return Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)

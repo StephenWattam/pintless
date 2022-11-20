@@ -22,19 +22,16 @@ class Quantity:
             raise TypeError("Cannot instantiate a Quantity object using a string expression as a unit: use the unit registry to do this instead.")
 
         self.magnitude = magnitude
-        self._set_unit(unit)
-
-    def _set_unit(self, unit) -> None:
-        """Set self.unit.  This should only be set when the object is constructed,
-        or when the in-place conversion method ito() is called.
-
-        This is a pint compatibility effort: ideally self.units and self.dimensionality
-        would not exist"""
         self.unit = unit
 
-        # These two are for pint compatibility
-        self.units = self.unit
-        self.dimensionality = self.unit.unit_type
+    @property
+    def units(self) -> unit.Unit:
+        """Pint compatibliity property, simply returns self.unit"""
+        return self.unit
+
+    @property
+    def dimensionality(self) -> str:
+        return self.unit.unit_type
 
     def m_as(self, target_unit: Union[str, unit.Unit]) -> Any:
         """Return the magnitude of this Quantity as if it is the unit given.
@@ -95,7 +92,7 @@ class Quantity:
             target_unit = self.unit.registry.get_unit(target_unit)
 
         self.magnitude *= self.unit.conversion_factor(target_unit)
-        self._set_unit(target_unit)
+        self.unit = target_unit
 
     # https://docs.python.org/3/reference/datamodel.html#emulating-numeric-types
 
@@ -190,15 +187,19 @@ class Quantity:
             # Assume it's a magnitude.  Maybe warn on this condition?
             __o = Quantity(__o, self.unit.dimensionless_unit)
 
-        # Units have multiply logic built in, and numbers do: 10s * 5kW = 50kW*s
-        conversion_factor, simplified_new_unit = (self.unit * __o.unit).simplify()
+        # Multiply a/b by b/c to get ab * bc.
+        # This is a copy of the logic in Unit, in an effort to increase performance.
+        new_numerators, new_denominators, conversion_factor = self.unit.simplify(self.unit.numerator_units + __o.unit.numerator_units,
+                                                                                 self.unit.denominator_units + __o.unit.denominator_units)
+        new_unit = unit.Unit(new_numerators, new_denominators, self.unit.dimensionless_base_unit, self.unit.registry)
+
         if isinstance(self.magnitude, list):
             assert not isinstance(__o.magnitude, list), "Cannot multiply two list types"
             new_magnitude = [x * __o.magnitude * conversion_factor for x in self.magnitude]
         else:
             new_magnitude = self.magnitude * __o.magnitude * conversion_factor
 
-        return Quantity(new_magnitude, simplified_new_unit)
+        return Quantity(new_magnitude, new_unit)
 
     __rmul__ = __mul__
 
@@ -214,17 +215,9 @@ class Quantity:
 
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
-        new_numerators = self.unit.numerator_units + __o.unit.denominator_units
-        new_denominators = self.unit.denominator_units + __o.unit.numerator_units
-
-        conversion_factor, new_unit = unit.Unit(
-            new_numerators,
-            new_denominators,
-            self.unit.dimensionless_base_unit,
-            self.unit.registry,
-        ).simplify()
-
-        # print(f"=> {conversion_factor}, {new_unit}: {self.magnitude}/{__o.magnitude}")
+        new_numerators, new_denominators, conversion_factor = self.unit.simplify(self.unit.numerator_units + __o.unit.denominator_units,
+                                                                                 self.unit.denominator_units + __o.unit.numerator_units)
+        new_unit = unit.Unit(new_numerators, new_denominators, self.unit.dimensionless_base_unit, self.unit.registry)
 
         if isinstance(self.magnitude, list):
             new_magnitude = [(x / __o.magnitude) * conversion_factor for x in self.magnitude]
@@ -306,4 +299,3 @@ class Quantity:
 
     def __repr__(self) -> str:
         return f"<Quantity({self.magnitude}, '{self.unit.name}')>"
-        return self.__str__()
