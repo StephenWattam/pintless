@@ -48,7 +48,6 @@ class Quantity:
 
         To perform these conversions you must convert the unit then multiply by the constant (i.e. 400).
         """
-
         if isinstance(target_unit, str):
             if self.unit.registry is None:
                 raise ValueError(
@@ -67,7 +66,6 @@ class Quantity:
 
     def to(self, target_unit: Union[str, plu.Unit]) -> Quantity:
         """Convert this Quantity to another unit"""
-
         if isinstance(target_unit, str):
             if self.unit.registry is None:
                 raise ValueError(
@@ -89,7 +87,6 @@ class Quantity:
 
     def ito(self, target_unit: Union[str, plu.Unit]) -> None:
         """In-place version of to"""
-
         if isinstance(target_unit, str):
             if self.unit.registry is None:
                 raise ValueError(
@@ -188,7 +185,6 @@ class Quantity:
 
     def __mul__(self, __o: object) -> Quantity:
         """Multiply the Quantity.  Outputs something with compound units"""
-
         # Someone is 'adding' units to this quantity
         if isinstance(__o, plu.Unit):
             return Quantity(self.magnitude, self.unit * __o)
@@ -225,7 +221,6 @@ class Quantity:
 
     def __truediv__(self, __o: object) -> Quantity:
         """'true' division, where 2/3 is 0.66 rather than 0"""
-
         if not isinstance(__o, Quantity):
             if isinstance(__o, plu.Unit):
                 __o = Quantity(1, __o)

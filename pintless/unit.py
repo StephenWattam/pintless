@@ -145,8 +145,8 @@ class Unit:
         Return the name of this unit.
 
         Generating this on instantiation costs performance, so this is computed on first call
-        and cached."""
-
+        and cached.
+        """
         if self._name is not None:
             return self._name
 
@@ -178,8 +178,8 @@ class Unit:
 
         Simplifying types may change units, resulting in a value change.  Because of this
         the method returns two items: a conversion factor that operates in the same way
-        as .conversion_factor(), and the resulting Unit instance itself."""
-
+        as .conversion_factor(), and the resulting Unit instance itself.
+        """
         def first_index(lst: List[BaseUnit], unit_type: str) -> Optional[int]:
             """Return the index of the first item out of lst that is of the unit type unit_type"""
             for i, u in enumerate(lst):
@@ -251,7 +251,6 @@ class Unit:
 
         This method is used by Quantity() to update values.
         """
-
         if not isinstance(target_unit, Unit):
             raise TypeError(
                 "Cannot compute conversion factor between unit and non-unit values"
@@ -302,7 +301,6 @@ class Unit:
         Returns true if both units have the same dimensionality, e.g. if it is
         possible to convert a quantity from this unit into the unit in 'other' or not.
         """
-
         return self.unit_type == other.unit_type
 
     # Set operations make this expensive, so cache the response
@@ -349,7 +347,6 @@ class Unit:
 
     def __truediv__(self, __o: Unit) -> Unit:
         """Divide these units by other units"""
-
         if not isinstance(__o, Unit):
             raise ValueError("Cannot divide unit by non-unit")
 

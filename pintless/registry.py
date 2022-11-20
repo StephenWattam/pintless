@@ -162,7 +162,6 @@ class Registry:
             hour * watt * Hz
 
         """
-
         if unit_name not in self.units:
             # We may have a unit that is an expression.
 
@@ -190,7 +189,6 @@ class Registry:
     @lru_cache
     def _get_base_unit(self, base_unit_name: str) -> BaseUnit:
         """Return a simple base unit type.  Used to construct units."""
-
         if base_unit_name in self.derived_types:
             raise ValueError(
                 f"Cannot instantiate base unit '{base_unit_name}', as it is a derived type"
@@ -218,7 +216,6 @@ class Registry:
         the need to resolve a full parse tree isn't there: we can simply
         walk through the operations left-to-right.
         """
-
         def type_for_token(token: str) -> Union[Unit, pintless.quantity.Quantity, str]:
             """Tokenise the string, returning a token."""
             if token in ("*", ""):

@@ -14,7 +14,6 @@ class BaseUnitTest(unittest.TestCase):
 
         This implies they have the same dimensionality
         """
-
         base_kw = self.r.kW.numerator_units[0]
         base_kw2 = self.r.kilowatt.numerator_units[0]
         assert base_kw == base_kw2
@@ -26,7 +25,6 @@ class UnitTest(unittest.TestCase):
 
     def test_dimensionless_unit(self):
         """A unit that represents no unit"""
-
         # Division by self should result in dimensionless unit
         unit_strings = ["meter", "cm", "kWh", "GBP / (meter * meter)"]
         for unit_str in unit_strings:
@@ -46,7 +44,6 @@ class UnitTest(unittest.TestCase):
 
     def test_unit_arithmetic(self):
         """Basic tests of unit arithmetic"""
-
         self.assertEqual(str(self.r.kWh / self.r.m), "(kwatt*hour)/m")
         self.assertEqual(
             str(self.r.kWh / self.r.m * self.r.hour), "(kwatt*hour*hour)/m"
@@ -55,7 +52,6 @@ class UnitTest(unittest.TestCase):
 
     def test_unit_names(self):
         """Test conversion to a string"""
-
         # Alias behavour
         assert str(self.r.kWh) == "kWh"
 
@@ -69,7 +65,6 @@ class UnitTest(unittest.TestCase):
         A relaxed form of equality, this can be used to check that one unit
         can be converted into another
         """
-
         unit_kwh = self.r.kWh
         unit_joules = self.r.joule
         unit_watts = self.r.watt

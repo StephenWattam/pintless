@@ -19,7 +19,6 @@ class RegistryTest(unittest.TestCase):
 
         This alias shouldn't affect any of the other comparisons
         """
-
         kwh = self.r.kWh
         assert kwh.name == "kWh"
         assert kwh == self.r.kW * self.r.H
@@ -76,7 +75,6 @@ class RegistryTest(unittest.TestCase):
 
     def test_string_parser_data_types(self):
         """Most numbers in expressions will return floats, unless they are all digits"""
-
         assert isinstance(self.r("-4 kWh").magnitude, int)
         assert isinstance(self.r("4 kWh").magnitude, int)
         assert isinstance(self.r("4.0 kWh").magnitude, float)
@@ -87,7 +85,6 @@ class RegistryTest(unittest.TestCase):
 
     def test_create_quantities_from_string(self):
         """Numeric values in expressions will cause the parser to return a Quantity."""
-
         assert self.r.get_unit("4 kWh") == (self.r.kWh * 4)
         assert self.r.get_unit("4 * kWh") == (self.r.kWh * 4)
         assert self.r.get_unit("kW * H * 4") == (self.r.kWh * 4)
@@ -108,7 +105,6 @@ class RegistryTest(unittest.TestCase):
 
     def test_serialisation_to_from_string(self):
         """Ensure serialisation/deserialisation is reliable"""
-
         test_strings = [
             "4 kWh",
             "kWh",
