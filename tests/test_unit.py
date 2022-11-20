@@ -1,10 +1,9 @@
-
 import unittest
 
 from pintless import Registry, Quantity, Unit
 
-class BaseUnitTest(unittest.TestCase):
 
+class BaseUnitTest(unittest.TestCase):
     def setUp(self) -> None:
         self.r = Registry()
 
@@ -20,7 +19,6 @@ class BaseUnitTest(unittest.TestCase):
 
 
 class UnitTest(unittest.TestCase):
-
     def setUp(self) -> None:
         self.r = Registry()
 
@@ -44,12 +42,13 @@ class UnitTest(unittest.TestCase):
         assert self.r.cm / self.r.dimensionless_unit == self.r.cm
         assert self.r.kWh / self.r.dimensionless_unit == self.r.kWh
 
-
     def test_unit_arithmetic(self):
         """Basic tests of unit arithmetic"""
 
         self.assertEqual(str(self.r.kWh / self.r.m), "(kwatt*hour)/m")
-        self.assertEqual(str(self.r.kWh / self.r.m * self.r.hour), "(kwatt*hour*hour)/m")
+        self.assertEqual(
+            str(self.r.kWh / self.r.m * self.r.hour), "(kwatt*hour*hour)/m"
+        )
         self.assertEqual(str(self.r.kWh / self.r.m * self.r.amp), "(amp*kwatt*hour)/m")
 
     def test_unit_names(self):
@@ -75,7 +74,6 @@ class UnitTest(unittest.TestCase):
 
         assert self.r("kg/Mwatt*hour").compatible_with(self.r("g")) is False
 
-
     def test_derived_unit_conversion(self):
 
         l = 1 * self.r.litre
@@ -87,9 +85,9 @@ class UnitTest(unittest.TestCase):
 
     def test_power_operator(self):
 
-        assert self.r.m ** 1 == self.r.m
-        assert self.r.m ** 2 == self.r.m * self.r.m
-        assert self.r.m ** 3 == self.r.m * self.r.m * self.r.m
+        assert self.r.m**1 == self.r.m
+        assert self.r.m**2 == self.r.m * self.r.m
+        assert self.r.m**3 == self.r.m * self.r.m * self.r.m
 
     def test_equality(self):
 

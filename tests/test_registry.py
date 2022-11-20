@@ -1,12 +1,9 @@
-
-
 import unittest
 
 from pintless import Registry, Quantity, Unit, UndefinedUnitError
 
 
 class RegistryTest(unittest.TestCase):
-
     def setUp(self) -> None:
         self.r = Registry()
 
@@ -106,12 +103,19 @@ class RegistryTest(unittest.TestCase):
         assert self.r("(4) * (7 kWh)") == 4 * 7 * self.r.kWh
 
         with self.assertRaises(AssertionError):
-            self.r("(4 kWh")         # mismatched brackets
+            self.r("(4 kWh")  # mismatched brackets
 
     def test_serialisation_to_from_string(self):
         """Ensure serialisation/deserialisation is reliable"""
 
-        test_strings = ["4 kWh", "kWh", "", "hour / second", "GBP / watt_hour", "kWh / watt_hour"]
+        test_strings = [
+            "4 kWh",
+            "kWh",
+            "",
+            "hour / second",
+            "GBP / watt_hour",
+            "kWh / watt_hour",
+        ]
 
         for test_string in test_strings:
             self.assertEqual(self.r(str(self.r(test_string))), self.r(test_string))

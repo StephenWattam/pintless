@@ -40,7 +40,9 @@ class BaseUnit:
         #     return 1 # FIXME: self.multiplier * 1 / target_unit.multiplier
 
         if self.unit_type != target_unit.unit_type:
-            raise TypeError(f"Cannot convert between units of different types ({self.unit_type} != {target_unit.unit_type}")
+            raise TypeError(
+                f"Cannot convert between units of different types ({self.unit_type} != {target_unit.unit_type}"
+            )
 
         # convert to the base unit, then convert from that base unit to the new unit
         conversion_factor = self.multiplier * 1 / target_unit.multiplier
@@ -83,7 +85,7 @@ class Unit:
         dimensionless_base_unit: BaseUnit,
         registry: Optional[pintless.registry.Registry],
         dimensionless_unit: Optional[Unit] = None,
-        alias: Optional[str] = None
+        alias: Optional[str] = None,
     ) -> None:
 
         self.registry = registry
@@ -97,7 +99,9 @@ class Unit:
             self.dimensionless_unit = dimensionless_unit
         else:
             # Else create a new one.
-            self.dimensionless_unit = Unit([], [], self.dimensionless_base_unit, self.registry)
+            self.dimensionless_unit = Unit(
+                [], [], self.dimensionless_base_unit, self.registry
+            )
 
         self.numerator_units = numerator_units
         self.denominator_units = denominator_units
@@ -127,7 +131,9 @@ class Unit:
         if self._denominator_unit_types is not None:
             return self._denominator_unit_types
 
-        self._denominator_unit_types = tuple(u.unit_type for u in self.denominator_units)
+        self._denominator_unit_types = tuple(
+            u.unit_type for u in self.denominator_units
+        )
         return self._denominator_unit_types
 
     @property
@@ -151,19 +157,24 @@ class Unit:
         self._name = f"{'*'.join(u.name for u in self.numerator_units)}"
 
         # If we have denominators
-        if not all(u.unit_type == self.dimensionless_base_unit.unit_type for u in self.denominator_units):
+        if not all(
+            u.unit_type == self.dimensionless_base_unit.unit_type
+            for u in self.denominator_units
+        ):
 
             if len(self.numerator_units) > 1:
                 self._name = f"({self._name})"
 
-            denom_name = '*'.join(u.name for u in self.denominator_units)
+            denom_name = "*".join(u.name for u in self.denominator_units)
             if len(self.denominator_units) > 1:
                 denom_name = f"({denom_name})"
             self._name += f"/{denom_name}"
 
         return self._name
 
-    def simplify(self, numerator_units: List[BaseUnit], denominator_units: List[BaseUnit]) -> Tuple[List[BaseUnit], List[BaseUnit], float]:
+    def simplify(
+        self, numerator_units: List[BaseUnit], denominator_units: List[BaseUnit]
+    ) -> Tuple[List[BaseUnit], List[BaseUnit], float]:
         """Cancel denominator and numerator units, resulting in the simplest
         possible representation of the unit.  This is executed after multiplication
         or division to ensure that the resulting unit is sane and useful.
@@ -182,20 +193,22 @@ class Unit:
         numerator_units = [
             u
             for u in numerator_units
-            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
+            if not (
+                u.unit_type == self.dimensionless_base_unit.unit_type
+                and u.multiplier == 1
+            )
         ]
         denominator_units = [
             u
             for u in denominator_units
-            if not (u.unit_type == self.dimensionless_base_unit.unit_type and u.multiplier == 1)
+            if not (
+                u.unit_type == self.dimensionless_base_unit.unit_type
+                and u.multiplier == 1
+            )
         ]
 
-        numerator_units = sorted(
-            numerator_units, key=lambda u: u.unit_type
-        )
-        denominator_units = sorted(
-            denominator_units, key=lambda u: u.unit_type
-        )
+        numerator_units = sorted(numerator_units, key=lambda u: u.unit_type)
+        denominator_units = sorted(denominator_units, key=lambda u: u.unit_type)
 
         # Find list of unit types in numerator, and list in denominator, then cancel them.
         # Sort by unit type so we know we can match up
@@ -290,9 +303,13 @@ class Unit:
         # print(f"Computing conversion factor from unit {self} to unit {target_unit}")
 
         if not isinstance(target_unit, Unit):
-            raise TypeError("Cannot compute conversion factor between unit and non-unit values")
+            raise TypeError(
+                "Cannot compute conversion factor between unit and non-unit values"
+            )
         if self.unit_type != target_unit.unit_type:
-            raise TypeError(f"Unable to convert from {self} to {target_unit} as they are defined in different dimensions")
+            raise TypeError(
+                f"Unable to convert from {self} to {target_unit} as they are defined in different dimensions"
+            )
 
         # Conversion factor for the numerator
         numerator_conversion_factor = 1
@@ -347,7 +364,9 @@ class Unit:
     def __hash__(self) -> int:
         return hash((set(self.numerator_units), set(self.denominator_units)))
 
-    def __mul__(self, __o: Union[Unit, ValidMagnitude, Quantity]) -> Union[Unit, Quantity]:
+    def __mul__(
+        self, __o: Union[Unit, ValidMagnitude, Quantity]
+    ) -> Union[Unit, Quantity]:
         """Return a quantity using this unit"""
 
         # If this is also a divided unit then the denominator has to have the same
@@ -356,10 +375,17 @@ class Unit:
             # Multiply a/b by b/c to get ab * bc.
             # This means concatenating the lists, but ensuring there's only ever one 'dimensionless'
 
-            new_numerators, new_denominators, _ = self.simplify(self.numerator_units + __o.numerator_units,
-                                                                self.denominator_units + __o.denominator_units)
+            new_numerators, new_denominators, _ = self.simplify(
+                self.numerator_units + __o.numerator_units,
+                self.denominator_units + __o.denominator_units,
+            )
 
-            return Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)
+            return Unit(
+                new_numerators,
+                new_denominators,
+                self.dimensionless_base_unit,
+                self.registry,
+            )
 
         if isinstance(__o, Quantity):
             return __o * self
@@ -383,7 +409,14 @@ class Unit:
         # If this has a denominator, flip it and then multiply it using the other mult rules.
         # (a / b) / (c / d) == ad / bc
 
-        new_numerators, new_denominators, _ = self.simplify(self.numerator_units + __o.denominator_units,
-                                                            self.denominator_units + __o.numerator_units)
+        new_numerators, new_denominators, _ = self.simplify(
+            self.numerator_units + __o.denominator_units,
+            self.denominator_units + __o.numerator_units,
+        )
 
-        return Unit(new_numerators, new_denominators, self.dimensionless_base_unit, self.registry)
+        return Unit(
+            new_numerators,
+            new_denominators,
+            self.dimensionless_base_unit,
+            self.registry,
+        )

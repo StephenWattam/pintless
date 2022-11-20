@@ -8,7 +8,6 @@ from pint import UnitRegistry
 from pintless import Registry
 
 
-
 def run_benchmark(r: Union[UnitRegistry, Registry]) -> float:
     start = time.time()
 
