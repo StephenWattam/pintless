@@ -244,8 +244,6 @@ class Unit:
 
         This method is used by Quantity() to update values."""
 
-        # print(f"Computing conversion factor from unit {self} to unit {target_unit}")
-
         if not isinstance(target_unit, Unit):
             raise TypeError(
                 "Cannot compute conversion factor between unit and non-unit values"

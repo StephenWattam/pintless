@@ -281,10 +281,7 @@ class Registry:
         # Shunting yard implementation to order the operations
         ops = []  # stack
         output_queue = []
-        # print(f"\nEXPR: {unit_expr}")
-        # print(f"TOKENS: {parts}")
-        parts.reverse()
-        # print(f"TOKENS (reversed): {parts}")
+        parts.reverse()  # It's more efficient to do this than to take from the front
         while len(parts) > 0:
             token = parts.pop()
 
@@ -308,11 +305,8 @@ class Registry:
             assert ops[-1] != OPEN_EXPR_TOKEN, "Parenthesis mismatch"
             output_queue.append(ops.pop())
 
-        # print(f"RPN: {output_queue}")
-
         operands = []
         for op in output_queue:
-            # print(f"EVAL: {operands}")
             if op == DIVIDE_TOKEN:
                 assert (
                     len(operands) >= 2
@@ -320,7 +314,6 @@ class Registry:
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a / b)
-                # print(f"EVAL: /")
             elif op == MULTIPLY_TOKEN:
                 assert (
                     len(operands) >= 2
@@ -328,7 +321,6 @@ class Registry:
                 b = operands.pop()
                 a = operands.pop()
                 operands.append(a * b)
-                # print(f"EVAL: *")
             else:
                 operands.append(op)
 
