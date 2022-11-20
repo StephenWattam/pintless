@@ -1,6 +1,6 @@
 import unittest
 
-from pintless import Registry, Quantity, Unit, UndefinedUnitError
+from pintless import Registry, UndefinedUnitError
 
 
 class RegistryTest(unittest.TestCase):

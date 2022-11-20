@@ -1,7 +1,7 @@
 """A small script to benchmark the unit library against pint."""
 
 import time
-from random import random
+# from random import random
 from typing import Union
 
 from pint import UnitRegistry
