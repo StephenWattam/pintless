@@ -235,7 +235,7 @@ class Quantity:
                 self.iterator = iterator
 
             def __iter__(self):
-                self.iterator
+                return self.iterator
 
             def __next__(self):
                 return next(self.iterator) * self.unit

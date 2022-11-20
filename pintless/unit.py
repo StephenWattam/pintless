@@ -220,7 +220,7 @@ class Unit:
 
         # Special case where we have x/x remaining
         if len(new_numerator) == len(new_denominator) and all(
-            [a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)]
+            a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)
         ):
             return [], [], conversion_factor
 
@@ -264,7 +264,7 @@ class Unit:
 
         # Special case where we have x/x remaining
         if len(new_numerator) == len(new_denominator) and all(
-            [a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)]
+            a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)
         ):
             return conversion_factor, self.dimensionless_unit
 

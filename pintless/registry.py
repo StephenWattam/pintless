@@ -210,7 +210,7 @@ class Registry:
         """
 
         def type_for_token(token: str):
-            if token == "*" or token == "":
+            if token in ("*", ""):
                 return MULTIPLY_TOKEN
             if token == "/":
                 return DIVIDE_TOKEN
