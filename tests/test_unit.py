@@ -1,6 +1,6 @@
 import unittest
 
-from pintless import Registry, Quantity, Unit
+from pintless import Registry
 
 
 class BaseUnitTest(unittest.TestCase):

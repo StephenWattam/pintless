@@ -29,15 +29,7 @@ class BaseUnit:
         self.base_unit = base_unit
         self.multiplier = multiplier
 
-    def conversion_factor(
-        self, target_unit: BaseUnit, dimensionless_unit: BaseUnit
-    ) -> float:
-
-        # if (
-        #     self.unit_type == dimensionless_unit.unit_type):
-        #     or target_unit.unit_type == dimensionless_unit.unit_type
-        # ):
-        #     return 1 # FIXME: self.multiplier * 1 / target_unit.multiplier
+    def conversion_factor(self, target_unit: BaseUnit) -> float:
 
         if self.unit_type != target_unit.unit_type:
             raise TypeError(
@@ -224,9 +216,7 @@ class Unit:
             # Find a unit with the correct type in the numerator and cancel it.
             index_to_cancel = first_index(new_numerator, denom_unit.unit_type)
             if index_to_cancel is not None:
-                conversion_factor *= new_numerator[index_to_cancel].conversion_factor(
-                    denom_unit, self.dimensionless_base_unit
-                )
+                conversion_factor *= new_numerator[index_to_cancel].conversion_factor(denom_unit)
                 del new_numerator[index_to_cancel]
             else:
                 new_denominator.append(denom_unit)
@@ -238,52 +228,6 @@ class Unit:
             return [], [], conversion_factor
 
         return new_numerator, new_denominator, conversion_factor
-
-    def _old_simplify(self) -> Tuple[float, Unit]:
-        """Cancel denominator and numerator units, resulting in the simplest
-        possible representation of the unit.  This is executed after multiplication
-        or division to ensure that the resulting unit is sane and useful.
-
-        Simplifying types may change units, resulting in a value change.  Because of this
-        the method returns two items: a conversion factor that operates in the same way
-        as .conversion_factor(), and the resulting Unit instance itself."""
-
-        def first_index(lst, unit_type: str):
-            for i, u in enumerate(lst):
-                if u.unit_type == unit_type:
-                    return i
-            return None
-
-        # Find list of unit types in numerator, and list in denominator, then cancel them.
-        # Sort by unit type so we know we can match up
-        new_numerator: List[BaseUnit] = [
-            u
-            for u in self.numerator_units
-            if u.unit_type != self.dimensionless_base_unit.unit_type
-        ]
-        new_denominator = []
-
-        conversion_factor = 1
-        for denom_unit in self.denominator_units:
-            # Find a unit with the correct type in the numerator and cancel it.
-            index_to_cancel = first_index(new_numerator, denom_unit.unit_type)
-            if index_to_cancel is not None:
-                conversion_factor *= new_numerator[index_to_cancel].conversion_factor(
-                    denom_unit, self.dimensionless_base_unit
-                )
-                del new_numerator[index_to_cancel]
-            else:
-                new_denominator.append(denom_unit)
-
-        # Special case where we have x/x remaining
-        if len(new_numerator) == len(new_denominator) and all(
-            a.unit_type == b.unit_type for a, b in zip(new_numerator, new_denominator)
-        ):
-            return conversion_factor, self.dimensionless_unit
-
-        return conversion_factor, Unit(
-            new_numerator, new_denominator, self.dimensionless_base_unit, self.registry
-        )
 
     def __repr__(self) -> str:
         return f"<Unit ({self.name})>"
@@ -316,20 +260,14 @@ class Unit:
         for base_unit_from, base_unit_to in zip(
             self.numerator_units, target_unit.numerator_units
         ):
-            # print(f"NCONV: {base_unit_from} TO {base_unit_to}")
-            numerator_conversion_factor *= base_unit_from.conversion_factor(
-                base_unit_to, self.dimensionless_base_unit
-            )
+            numerator_conversion_factor *= base_unit_from.conversion_factor(base_unit_to)
 
         # Conversion factor for all the multiplied denominator items
         denominator_conversion_factor = 1
         for base_unit_from, base_unit_to in zip(
             self.denominator_units, target_unit.denominator_units
         ):
-            # print(f"DCONV: {base_unit_from} TO {base_unit_to}")
-            denominator_conversion_factor *= base_unit_from.conversion_factor(
-                base_unit_to, self.dimensionless_base_unit
-            )
+            denominator_conversion_factor *= base_unit_from.conversion_factor(base_unit_to)
 
         conversion_factor = numerator_conversion_factor / denominator_conversion_factor
 
@@ -395,9 +333,9 @@ class Unit:
 
     __rmul__ = __mul__
 
-    def __pow__(self, __o: int) -> Unit:
+    def __pow__(self, __o: int) -> Union[Unit, Quantity]:
         val = self
-        for i in range(__o - 1):
+        for _ in range(__o - 1):
             val = val * self
         return val
 

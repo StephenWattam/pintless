@@ -263,6 +263,7 @@ class Quantity:
                 return self.iterator
 
             def __next__(self):
+                # skipcq: PTC-W0063
                 return next(self.iterator) * self.unit
 
         return QuantityIterator(self.unit, iter(self.magnitude))

@@ -90,7 +90,7 @@ class Registry:
                             denominator_list,
                         )
                         if prefix + unit_name in self.units:
-                            log.warn(
+                            log.warning(
                                 "Detected duplicate unit in unit definition: %s",
                                 prefix + unit_name,
                             )
@@ -107,7 +107,7 @@ class Registry:
                     )
                     self.utype_for_unit[prefix + unit_name] = utype
                     if prefix + unit_name in self.units:
-                        log.warn(
+                        log.warning(
                             "Detected duplicate unit in unit definition: %s",
                             prefix + unit_name,
                         )
