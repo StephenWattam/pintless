@@ -10,7 +10,7 @@ setup(
     author_email="steve@watt.am",
     url="https://github.com/StephenWattam/pintless",
     packages=["pintless"],
-    package_data={"pintless": ["pintless/default_units.json"]},
+    package_data={"pintless": ["default_units.json"]},
     include_package_data=True,
     extras_require={"dev": ["flake8"], "test": ["pytest", "pytest-cov"]},
 )
