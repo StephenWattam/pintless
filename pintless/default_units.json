@@ -69,7 +69,8 @@
     },
 
     "dimensionless": {
-        "dimensionless": 1
+        "dimensionless": 1,
+        "bool": 1
     },
 
     "length": {
